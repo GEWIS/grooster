@@ -165,12 +165,32 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
     const isAssigned = (userId: number, shiftId: number) =>
         !!savedShiftFor(shiftId)?.users?.some((user) => user.id === userId);
 
-    /** Everyone not yet assigned, in the backend's ranked order (best match first). */
+    /** Ids of users assigned to another shift in the same shift group. Ungrouped shifts have no siblings. */
+    function assignedInShiftGroup(shiftId: number): Set<number> {
+        const groupId = shifts.value.find((s) => s.id === shiftId)?.shiftGroupId;
+        if (groupId == null) return new Set();
+
+        const siblingIds = new Set(
+            shifts.value.filter((s) => s.shiftGroupId === groupId && s.id !== shiftId).map((s) => s.id),
+        );
+        return new Set(
+            (savedRoster.value?.savedShifts ?? [])
+                .filter((saved) => siblingIds.has(saved.rosterShiftId))
+                .flatMap((saved) => saved.users ?? [])
+                .map((user) => user.id),
+        );
+    }
+
+    /**
+     * Everyone not yet assigned to this shift or another shift in its group,
+     * in the backend's ranked order (best match first).
+     */
     function candidates(shiftId: number): RosterMember[] {
         const shift = shifts.value.find((s) => s.id === shiftId);
         const ranked = savedRoster.value?.savedShiftOrdering?.find((o) => o.shiftName === shift?.name)?.users;
         const pool = ranked ? ranked.map(toMember) : members.value;
-        return pool.filter((member) => !isAssigned(member.id, shiftId));
+        const takenInGroup = assignedInShiftGroup(shiftId);
+        return pool.filter((member) => !isAssigned(member.id, shiftId) && !takenInGroup.has(member.id));
     }
 
     const busyAssignments = reactive(new Set<string>());

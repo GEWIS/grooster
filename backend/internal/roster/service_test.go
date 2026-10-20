@@ -561,6 +561,33 @@ func (suite *TestRosterSuite) TestSaveRoster_Success() {
 	assert.True(suite.T(), savedRoster.Saved)
 }
 
+func (suite *TestRosterSuite) TestSaveRoster_MixedShiftGroups() {
+	roster := models.Roster{
+		Name:    "Mixed Groups Roster",
+		OrganID: 1,
+	}
+	suite.db.Create(&roster)
+
+	shiftGroup := models.ShiftGroup{OrganID: 1, Name: "Mixed Group"}
+	suite.db.Create(&shiftGroup)
+
+	// One grouped and one ungrouped shift, so a batch upsert would contain a nil ShiftGroupID
+	suite.db.Create(&models.RosterShift{RosterID: roster.ID, Name: "Grouped", ShiftGroupID: &shiftGroup.ID})
+	suite.db.Create(&models.RosterShift{RosterID: roster.ID, Name: "Ungrouped"})
+
+	err := suite.service.SaveRoster(roster.ID)
+	assert.NoError(suite.T(), err)
+
+	var savedRoster models.Roster
+	err = suite.db.First(&savedRoster, roster.ID).Error
+	assert.NoError(suite.T(), err)
+	assert.True(suite.T(), savedRoster.Saved)
+
+	var savedShifts []models.SavedShift
+	suite.db.Where("roster_id = ?", roster.ID).Find(&savedShifts)
+	assert.Len(suite.T(), savedShifts, 2)
+}
+
 func (suite *TestRosterSuite) TestSaveRoster_RosterNotFound() {
 	err := suite.service.SaveRoster(99999)
 	assert.Error(suite.T(), err)
