@@ -153,8 +153,9 @@ func (s *service) SaveRoster(ID uint) error {
 		}
 	}
 
-	roster.Saved = true
-	if err := s.db.Save(&roster).Error; err != nil {
+	// Update on a fresh model so GORM doesn't upsert the preloaded shifts: its batch insert
+	// emits DEFAULT for a nil ShiftGroupID, which SQLite rejects.
+	if err := s.db.Model(&models.Roster{}).Where("id = ?", roster.ID).Update("saved", true).Error; err != nil {
 		return err
 	}
 
