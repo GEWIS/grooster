@@ -13,8 +13,8 @@ jobs:
     if: ${{ needs.versioning.outputs.next-version != '' }}
     with:
       projects: "['backend']"
+      github-registry: 'true'
       version: ${{ needs.versioning.outputs.next-version }}
-      docker-registry: "abc.docker-registry.gewis.nl"
       docker-paths: "['eou/grooster-backend']"
     secrets:
       REGISTRY_USERNAME: ${{ secrets.SVC_GH_ABCEOU_USERNAME }}
@@ -27,7 +27,7 @@ jobs:
     with:
       projects: "['frontend']"
       version: ${{ needs.versioning.outputs.next-version }}
-      docker-registry: "abc.docker-registry.gewis.nl"
+      github-registry: 'true'
       docker-paths: "['eou/grooster-frontend']"
     secrets:
       REGISTRY_USERNAME: ${{ secrets.SVC_GH_ABCEOU_USERNAME }}
