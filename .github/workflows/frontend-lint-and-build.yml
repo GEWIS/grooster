@@ -21,6 +21,6 @@ jobs:
     build-and-lint:
         uses: GEWIS/actions/.github/workflows/lint-and-build-npm.yml@v1
         with:
-            node-version: '22.x'
+            node-version: '22.23.4'
             format: true
             working-directory: './frontend'
