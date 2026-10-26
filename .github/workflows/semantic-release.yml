@@ -38,7 +38,7 @@ jobs:
     needs: versioning
     if: ${{ needs.versioning.outputs.next-version != '' }}
     with:
-      node-version: '22.x'
+      node-version: '22.23.4'
       version: ${{ needs.versioning.outputs.next-version }}
       working-directory: './packages/grooster-client'
     secrets:

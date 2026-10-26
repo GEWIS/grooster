@@ -22,7 +22,7 @@ jobs:
   build-and-lint-client:
     uses: GEWIS/actions/.github/workflows/lint-and-build-npm.yml@v1
     with:
-      node-version: "^22.0.0"
+      node-version: "22.23.4"
       build: true
       test: false
       working-directory: './packages/grooster-client'
