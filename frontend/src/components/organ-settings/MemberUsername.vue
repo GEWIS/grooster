@@ -21,7 +21,7 @@ const fetchMemberData = async () => {
     if (!userStore.user?.id || !organStore.organ) return;
 
     try {
-        const { data } = await ApiService.organ.organIdMemberUserIdGet(organStore.organ, userStore.user.id);
+        const { data } = await ApiService.organ.getMemberSettings(organStore.organ, userStore.user.id);
         memberSettings.value = data;
         editName.value = data.username || '';
     } catch (e) {
@@ -52,7 +52,7 @@ const updateMemberSettings = async () => {
     };
 
     try {
-        const { data } = await ApiService.organ.organIdMemberUserIdPatch(organStore.organ, userStore.user.id, params);
+        const { data } = await ApiService.organ.updateMemberSettings(organStore.organ, userStore.user.id, params);
         memberSettings.value = data;
         editName.value = data.username;
     } catch (e) {

@@ -17,7 +17,7 @@ async function create() {
     if (!name.value.trim()) return;
     saving.value = true;
     try {
-        await ApiService.shiftGroupApi.createShiftGroup({ organId: props.organId, name: name.value.trim() });
+        await ApiService.shiftGroupApi.createShiftGroup(props.organId, { name: name.value.trim() });
         emit('created');
         visible.value = false;
     } catch (error) {

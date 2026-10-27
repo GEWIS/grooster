@@ -18,7 +18,7 @@ onMounted(async () => {
 
 async function loadUser() {
     const gewisId = getGEWISId();
-    const response = await ApiService.user.userGet(undefined, gewisId);
+    const response = await ApiService.user.getUsers(undefined, gewisId);
 
     user.value = response.data[0];
     organs.value = user.value.organs;

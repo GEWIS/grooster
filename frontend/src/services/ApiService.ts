@@ -4,6 +4,7 @@ import {
     AuthApi,
     RosterAnswerApi,
     RosterShiftApi,
+    RosterTemplateApi,
     SavedShiftApi,
     Configuration,
     ExportApi,
@@ -21,6 +22,8 @@ class ApiService {
     private readonly _rosterAnswerApi: RosterAnswerApi;
 
     private readonly _rosterShiftApi: RosterShiftApi;
+
+    private readonly _rosterTemplateApi: RosterTemplateApi;
 
     private readonly _savedShiftApi: SavedShiftApi;
 
@@ -47,6 +50,7 @@ class ApiService {
         this._rosterCommentApi = new RosterCommentApi(config);
         this._rosterAnswerApi = new RosterAnswerApi(config);
         this._rosterShiftApi = new RosterShiftApi(config);
+        this._rosterTemplateApi = new RosterTemplateApi(config);
         this._savedShiftApi = new SavedShiftApi(config);
         this._shiftGroupApi = new ShiftGroupApi(config);
         this._exportApi = new ExportApi(config);
@@ -69,6 +73,10 @@ class ApiService {
 
     get rosterShift(): RosterShiftApi {
         return this._rosterShiftApi;
+    }
+
+    get rosterTemplate(): RosterTemplateApi {
+        return this._rosterTemplateApi;
     }
 
     get savedShiftApi(): SavedShiftApi {

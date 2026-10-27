@@ -18,7 +18,7 @@ export const useUserStore = defineStore('user', {
             if (this.user) return this.user;
 
             try {
-                const response = await ApiService.user.userGet(undefined, gewisId);
+                const response = await ApiService.user.getUsers(undefined, gewisId);
                 this.user = response.data[0];
 
                 return this.user;

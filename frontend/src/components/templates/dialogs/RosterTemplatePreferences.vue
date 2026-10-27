@@ -18,9 +18,9 @@ const preferences = ref<Record<number, RosterTemplateShiftPreference>>({});
 watch(visible, async (open) => {
     if (!open || !userStore.user) return;
     try {
-        const { data } = await ApiService.roster.getRosterTemplateShiftPreferences(
-            userStore.user.id,
+        const { data } = await ApiService.rosterTemplate.getRosterTemplateShiftPreferences(
             props.template.id,
+            userStore.user.id,
         );
         preferences.value = Object.fromEntries(data.map((pref) => [pref.rosterTemplateShiftID, pref]));
     } catch (error) {
@@ -32,8 +32,10 @@ async function setPreference(templateShiftId: number, value: string) {
     const existing = preferences.value[templateShiftId];
     try {
         const { data } = existing?.id
-            ? await ApiService.roster.updateRosterTemplateShiftPreference(existing.id, { preference: value })
-            : await ApiService.roster.createRosterTemplateShiftPreference({
+            ? await ApiService.rosterTemplate.updateRosterTemplateShiftPreference(props.template.id, existing.id, {
+                  preference: value,
+              })
+            : await ApiService.rosterTemplate.createRosterTemplateShiftPreference(props.template.id, {
                   preference: value,
                   rosterTemplateShiftID: templateShiftId,
                   userId: userStore.user.id,
