@@ -19,7 +19,7 @@ type Handler struct {
 func NewAuthHandler(rg *gin.RouterGroup, auth Service, provider *oidc.Provider, config *oauth2.Config) *Handler {
 	h := &Handler{config: config, provider: provider, service: auth}
 
-	log.Printf("Path %s", rg.BasePath())
+	log.Debug().Str("path", rg.BasePath()).Msg("Registering auth routes")
 
 	rg.GET("/redirect", h.AuthRedirect)
 	rg.GET("/callback", h.AuthCallback)

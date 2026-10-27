@@ -6,8 +6,9 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Service interface {
@@ -392,7 +393,7 @@ func (s *service) getSavedShiftOrdering(savedShifts []*models.SavedShift, organI
 			Scan(&users).Error
 
 		if err != nil {
-			log.Println("Error:", err)
+			log.Error().Err(err).Str("shift_name", shiftName).Msg("Failed to fetch shift ordering users")
 		}
 
 		orderings = append(orderings, &models.SavedShiftOrdering{
