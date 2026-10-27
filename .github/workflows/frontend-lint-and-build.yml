@@ -5,12 +5,14 @@ on:
             - develop
         paths:
             - 'frontend/**'
+            - 'packages/grooster-client/**'
             - '.github/workflows/frontend-lint-and-build.yml'
     pull_request:
         branches:
             - develop
         paths:
             - 'frontend/**'
+            - 'packages/grooster-client/**'
             - '.github/workflows/frontend-lint-and-build.yml'
 
 concurrency:
@@ -24,3 +26,6 @@ jobs:
             node-version: '22.23.4'
             format: true
             working-directory: './frontend'
+            # The frontend depends on the local generated client (file:../packages/grooster-client),
+            # whose dist/ is not committed, so build it before the frontend installs.
+            prepare-command: 'cd packages/grooster-client && npm ci && npm run build'
