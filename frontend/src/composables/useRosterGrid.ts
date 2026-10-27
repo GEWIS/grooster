@@ -45,7 +45,7 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
     async function loadMembers() {
         try {
             const [userResponse, settingsResponse] = await Promise.all([
-                ApiService.user.userGet(organId.value),
+                ApiService.user.getUsers(organId.value),
                 ApiService.organ.getMembersSettings(organId.value),
             ]);
             const nicknames = new Map(settingsResponse.data.map((setting) => [setting.userId, setting.username]));
@@ -90,9 +90,9 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
         pendingAnswers.set(k, value);
         try {
             if (existing?.id) {
-                await rosterStore.updateAnswer(existing.id, { value });
+                await rosterStore.updateAnswer(rosterId.value, existing.id, { value });
             } else {
-                await rosterStore.createAnswer({ rosterId: rosterId.value, rosterShiftId: shiftId, userId, value });
+                await rosterStore.createAnswer(rosterId.value, { rosterShiftId: shiftId, userId, value });
             }
         } catch (error) {
             notifyError('Could not save your answer', error);
@@ -106,13 +106,13 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
         rosterStore.getComments(rosterId.value).find((comment) => comment.userId === userId)?.comment ?? '';
 
     async function saveComment(userId: number, comment: string) {
-        await rosterStore.updateComment({ rosterId: rosterId.value, userId, comment });
+        await rosterStore.updateComment(rosterId.value, { userId, comment });
     }
 
     // --- Shifts (admin, while open) ----------------------------------------------------------
     async function addShift(name: string) {
         try {
-            await rosterStore.createShift({ name, rosterId: rosterId.value });
+            await rosterStore.createShift(rosterId.value, { name });
         } catch (error) {
             notifyError('Could not add the shift', error);
         }
@@ -134,15 +134,15 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
         if (!current || !target) return;
 
         await Promise.all([
-            rosterStore.updateShift(current.id, { order: target.order }),
-            rosterStore.updateShift(target.id, { order: current.order }),
+            rosterStore.updateShift(rosterId.value, current.id, { order: target.order }),
+            rosterStore.updateShift(rosterId.value, target.id, { order: current.order }),
         ]);
     }
 
     // --- Lock / fill -------------------------------------------------------------------------
     async function lock() {
         try {
-            await rosterStore.saveRoster(rosterId.value);
+            await rosterStore.lockRoster(rosterId.value);
         } catch (error) {
             notifyError('Could not lock the roster', error);
         }
@@ -204,7 +204,7 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
         const users = assigned ? [...ids, userId] : ids.filter((id) => id !== userId);
         busyAssignments.add(key(userId, shiftId));
         try {
-            await rosterStore.updateSavedShift(saved.id, { users });
+            await rosterStore.updateSavedShift(rosterId.value, saved.id, { users });
         } catch (error) {
             notifyError(assigned ? 'Could not assign' : 'Could not remove the assignment', error);
         } finally {

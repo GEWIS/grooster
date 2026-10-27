@@ -63,7 +63,7 @@ export const useRosterStore = defineStore('roster', {
             this.selectedRosterId = null;
         },
         async fetchRosters(organId: number) {
-            await ApiService.roster.getRosters(undefined, undefined, undefined, organId).then((res) => {
+            await ApiService.roster.getRosters(organId).then((res) => {
                 res.data.forEach((roster: Roster) => {
                     if (roster.id != null) {
                         this.rosters[roster.id] = roster;
@@ -72,8 +72,8 @@ export const useRosterStore = defineStore('roster', {
                 return this.rosters;
             });
         },
-        async createRoster(params: RosterCreateRequest) {
-            const res = await ApiService.roster.createRoster(params);
+        async createRoster(organId: number, params: RosterCreateRequest) {
+            const res = await ApiService.roster.createRoster(organId, params);
             const roster = res.data;
             if (roster.id != null) {
                 this.rosters[roster.id] = roster;
@@ -110,11 +110,10 @@ export const useRosterStore = defineStore('roster', {
                 console.error('Failed to delete an roster:', error);
             }
         },
-        async createAnswer(params: AnswerCreateRequest) {
+        async createAnswer(rosterId: number, params: AnswerCreateRequest) {
             try {
-                const response = await ApiService.rosterAnswer.createRosterAnswer(params);
-                const rosterId = response.data?.rosterId;
-                const roster = rosterId && this.rosters[rosterId];
+                const response = await ApiService.rosterAnswer.createRosterAnswer(rosterId, params);
+                const roster = this.rosters[rosterId];
 
                 if (roster) {
                     this.rosters[rosterId] = {
@@ -128,12 +127,11 @@ export const useRosterStore = defineStore('roster', {
                 console.error('Failed to create roster answer:', error);
             }
         },
-        async updateAnswer(id: number, params: AnswerUpdateRequest) {
+        async updateAnswer(rosterId: number, id: number, params: AnswerUpdateRequest) {
             try {
-                const response = await ApiService.rosterAnswer.updateRosterAnswer(id, params);
-                const rosterId = response.data?.rosterId;
+                const response = await ApiService.rosterAnswer.updateRosterAnswer(rosterId, id, params);
 
-                if (!rosterId || !this.rosters[rosterId]) {
+                if (!this.rosters[rosterId]) {
                     console.warn('Invalid roster ID or roster not found');
                     return;
                 }
@@ -173,12 +171,9 @@ export const useRosterStore = defineStore('roster', {
                 console.error('Failed to fetch roster comments:', error);
             }
         },
-        async updateComment(params: CommentCreateRequest) {
+        async updateComment(rosterId: number, params: CommentCreateRequest) {
             try {
-                const response = await ApiService.rosterComment.createRosterComment(params);
-                const rosterId = response.data?.rosterId;
-
-                if (!rosterId) return response.data;
+                const response = await ApiService.rosterComment.createRosterComment(rosterId, params);
 
                 const existingComments = this.comments[rosterId] ?? [];
                 const commentIndex = existingComments.findIndex((comment) => comment.userId === params.userId);
@@ -234,9 +229,9 @@ export const useRosterStore = defineStore('roster', {
                 [rosterId]: existing.filter((responsible) => responsible.userId !== userId),
             };
         },
-        async createShift(params: ShiftCreateRequest) {
-            await ApiService.rosterShift.createRosterShift(params).then((res) => {
-                const roster = this.rosters[res.data.rosterId];
+        async createShift(rosterId: number, params: ShiftCreateRequest) {
+            await ApiService.rosterShift.createRosterShift(rosterId, params).then((res) => {
+                const roster = this.rosters[rosterId];
 
                 const existingShifts = roster.rosterShift ?? [];
 
@@ -251,12 +246,11 @@ export const useRosterStore = defineStore('roster', {
                 };
             });
         },
-        async updateShift(shiftId: number, params: ShiftUpdateRequest) {
+        async updateShift(rosterId: number, shiftId: number, params: ShiftUpdateRequest) {
             try {
-                await ApiService.rosterShift.updateRosterShift(shiftId, params);
+                await ApiService.rosterShift.updateRosterShift(rosterId, shiftId, params);
 
-                const rosters: Roster[] = Object.values(this.rosters);
-                const roster = rosters.find((r) => r.rosterShift?.some((s) => s.id === shiftId));
+                const roster = this.rosters[rosterId];
 
                 if (roster && roster.rosterShift) {
                     const shiftIndex = roster.rosterShift.findIndex((s) => s.id === shiftId);
@@ -277,7 +271,7 @@ export const useRosterStore = defineStore('roster', {
             }
         },
         async deleteShift(shiftId: number, rosterId: number) {
-            await ApiService.rosterShift.deleteRosterShift(shiftId).then(() => {
+            await ApiService.rosterShift.deleteRosterShift(rosterId, shiftId).then(() => {
                 const roster = this.rosters[rosterId];
                 if (!roster) return;
 
@@ -296,8 +290,8 @@ export const useRosterStore = defineStore('roster', {
                 };
             });
         },
-        async saveRoster(id: number) {
-            await ApiService.savedShiftApi.rosterSave(id).then(() => {
+        async lockRoster(id: number) {
+            await ApiService.savedShiftApi.lockRoster(id).then(() => {
                 const roster: Roster = this.rosters[id];
                 const updatedRoster = {
                     ...roster,
@@ -312,7 +306,7 @@ export const useRosterStore = defineStore('roster', {
         },
         async fetchSavedShifts(id: number) {
             try {
-                const res = await ApiService.savedShiftApi.getSavedRoster(id);
+                const res = await ApiService.savedShiftApi.getSavedShifts(id);
                 this.savedRoster = {
                     ...this.savedRoster,
                     [id]: res.data,
@@ -321,8 +315,8 @@ export const useRosterStore = defineStore('roster', {
                 console.error('Fetch failed', error);
             }
         },
-        async updateSavedShift(shiftId: number, params: SavedShiftUpdateRequest) {
-            await ApiService.savedShiftApi.updateSavedShift(shiftId, params).then((res) => {
+        async updateSavedShift(rosterId: number, shiftId: number, params: SavedShiftUpdateRequest) {
+            await ApiService.savedShiftApi.updateSavedShift(rosterId, shiftId, params).then((res) => {
                 const updatedShift = res.data;
 
                 const shiftResponses = this.savedRoster[updatedShift.rosterId];

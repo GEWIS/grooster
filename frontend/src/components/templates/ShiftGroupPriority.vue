@@ -2,18 +2,13 @@
 import { computed, onMounted, ref } from 'vue';
 import { useToast } from 'openvue/usetoast';
 import { OiArrowCircleDown } from '@openvue/openicons-vue';
-import {
-    GEWISRoosterInternalModelsGroupPriority,
-    type ShiftGroupPriority,
-    type User,
-} from '@gewis/grooster-backend-ts';
+import { ModelsGroupPriority, type ShiftGroupPriority, type User } from '@gewis/grooster-backend-ts';
 import ApiService from '@/services/ApiService';
 import { fieldSelectPt } from '@/theme/pt';
 
-export type GroupPriority =
-    (typeof GEWISRoosterInternalModelsGroupPriority)[keyof typeof GEWISRoosterInternalModelsGroupPriority];
+export type GroupPriority = (typeof ModelsGroupPriority)[keyof typeof ModelsGroupPriority];
 
-const priorityOptions = Object.entries(GEWISRoosterInternalModelsGroupPriority).map(([label, value]) => ({
+const priorityOptions = Object.entries(ModelsGroupPriority).map(([label, value]) => ({
     label,
     value,
 }));
@@ -27,13 +22,13 @@ const selected = ref<User | null>(null);
 const pushing = ref(false);
 
 const priorityOf = (userId: number): GroupPriority =>
-    priorities.value.find((p) => p.userId === userId)?.priority ?? GEWISRoosterInternalModelsGroupPriority.Default;
+    priorities.value.find((p) => p.userId === userId)?.priority ?? ModelsGroupPriority.Default;
 const priorityLabel = (userId: number) => priorityOptions.find((o) => o.value === priorityOf(userId))?.label;
 const selectedPriority = computed(() => (selected.value ? priorityOf(selected.value.id) : null));
 
 async function fetchUsers() {
     try {
-        users.value = (await ApiService.user.userGet(props.organId)).data;
+        users.value = (await ApiService.user.getUsers(props.organId)).data;
     } catch (error) {
         console.error(error);
     }

@@ -5,13 +5,13 @@ import { useToast } from 'openvue/usetoast';
 import IconField from 'openvue/iconfield';
 import InputIcon from 'openvue/inputicon';
 import { OiChevronLeft, OiSearch } from '@openvue/openicons-vue';
-import { GEWISRoosterInternalModelsOrganRole, type User, type UserOrgan } from '@gewis/grooster-backend-ts';
+import { ModelsOrganRole, type User, type UserOrgan } from '@gewis/grooster-backend-ts';
 import ApiService from '@/services/ApiService';
 import { fieldSelectPt, readableDisabled } from '@/theme/pt';
 
-export type UserRole = (typeof GEWISRoosterInternalModelsOrganRole)[keyof typeof GEWISRoosterInternalModelsOrganRole];
+export type UserRole = (typeof ModelsOrganRole)[keyof typeof ModelsOrganRole];
 
-const roleOptions = Object.entries(GEWISRoosterInternalModelsOrganRole).map(([key, value]) => ({
+const roleOptions = Object.entries(ModelsOrganRole).map(([key, value]) => ({
     label: key.replace('Role', ''),
     value,
 }));
@@ -73,13 +73,13 @@ async function persist() {
     saving.value = true;
     try {
         if (roleChanged.value && draftRole.value) {
-            const { data } = await ApiService.organ.organIdMemberUserIdRolePatch(props.organId, user.id, {
+            const { data } = await ApiService.organ.updateMemberRole(props.organId, user.id, {
                 role: draftRole.value,
             });
             settings.value = settings.value.map((s) => (s.userId === data.userId ? data : s));
         }
         if (nameChanged.value) {
-            await ApiService.organ.organIdMemberUserIdPatch(props.organId, user.id, { username: draftName.value });
+            await ApiService.organ.updateMemberSettings(props.organId, user.id, { username: draftName.value });
             await fetchSettings();
         }
         toast.add({ severity: 'success', summary: 'Changes saved', life: 3000 });
@@ -105,7 +105,7 @@ function save() {
 
 async function fetchUsers() {
     try {
-        users.value = (await ApiService.user.userGet(props.organId)).data;
+        users.value = (await ApiService.user.getUsers(props.organId)).data;
     } catch (error) {
         console.error(error);
     }

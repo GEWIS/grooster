@@ -33,7 +33,7 @@ async function save() {
     if (!canSave.value) return;
     saving.value = true;
     try {
-        await templateStore.createTemplate({ name: name.value.trim(), organId: props.organId, shifts: shifts.value });
+        await templateStore.createTemplate(props.organId, { name: name.value.trim(), shifts: shifts.value });
         visible.value = false;
     } finally {
         saving.value = false;

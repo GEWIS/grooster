@@ -4,7 +4,7 @@ import { useToast } from 'openvue/usetoast';
 import ApiService from '@/services/ApiService';
 import { dialogPt, fieldSelectPt } from '@/theme/pt';
 
-defineProps<{
+const props = defineProps<{
     template: RosterTemplate;
     shiftGroups: ShiftGroup[];
 }>();
@@ -13,7 +13,7 @@ const toast = useToast();
 
 async function setGroup(shiftId: number, shiftGroupId: number | null) {
     try {
-        await ApiService.roster.updateRosterTemplateShift(shiftId, { shiftGroupId });
+        await ApiService.rosterTemplate.updateRosterTemplateShift(props.template.id, shiftId, { shiftGroupId });
     } catch (error) {
         console.error(error);
         toast.add({ severity: 'error', summary: 'Could not change the shift group', life: 5000 });

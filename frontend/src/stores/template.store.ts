@@ -21,7 +21,7 @@ export const useTemplateStore = defineStore('rosterTemplate', {
     actions: {
         async fetchTemplates(organId: number) {
             try {
-                const response = await ApiService.roster.getRosterTemplates(organId);
+                const response = await ApiService.rosterTemplate.getRosterTemplates(organId);
                 const templates = response.data;
 
                 if (templates && templates.length > 0) {
@@ -33,9 +33,9 @@ export const useTemplateStore = defineStore('rosterTemplate', {
                 console.error('Failed to fetch templates', error);
             }
         },
-        async createTemplate(params: TemplateCreateRequest) {
+        async createTemplate(organId: number, params: TemplateCreateRequest) {
             try {
-                const response = await ApiService.roster.createRosterTemplate(params);
+                const response = await ApiService.rosterTemplate.createRosterTemplate(organId, params);
                 const template = response.data as RosterTemplate;
 
                 this.templates[template.id] = template;
@@ -45,7 +45,7 @@ export const useTemplateStore = defineStore('rosterTemplate', {
         },
         async deleteTemplate(templateId: number) {
             try {
-                await ApiService.roster.deleteRosterTemplate(templateId);
+                await ApiService.rosterTemplate.deleteRosterTemplate(templateId);
 
                 delete this.templates[templateId];
             } catch (error) {

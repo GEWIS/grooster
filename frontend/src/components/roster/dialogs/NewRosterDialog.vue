@@ -56,10 +56,9 @@ async function create() {
     if (!canCreate.value) return;
     saving.value = true;
     try {
-        const created = await rosterStore.createRoster({
+        const created = await rosterStore.createRoster(props.organId, {
             name: name.value.trim(),
             date: toRosterDate(date.value),
-            organId: props.organId,
             ...(template.value ? { shifts: selectedShifts.value, templateId: template.value.id } : {}),
         });
         if (created?.id != null) {
