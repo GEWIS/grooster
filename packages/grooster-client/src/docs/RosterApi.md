@@ -4,24 +4,15 @@ All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**createRoster**](#createroster) | **POST** /roster | CreateRoster a new roster|
-|[**createRosterResponsible**](#createrosterresponsible) | **POST** /roster/{id}/responsibles | Create a roster responsible|
-|[**createRosterTemplate**](#createrostertemplate) | **POST** /roster/template | Creates a template of a roster by defining the name of the shifts|
-|[**createRosterTemplateShiftPreference**](#createrostertemplateshiftpreference) | **POST** /roster/template/shift-preference | Creates a roster template shift preference|
-|[**deleteRoster**](#deleteroster) | **DELETE** /roster/{id} | DeleteRoster a roster|
-|[**deleteRosterResponsible**](#deleterosterresponsible) | **DELETE** /roster/{id}/responsibles/{userId} | Delete a roster responsible|
-|[**deleteRosterTemplate**](#deleterostertemplate) | **DELETE** /roster/template/{id} | Deletes a roster template by ID|
-|[**fillRoster**](#fillroster) | **POST** /roster/{id}/fill | Fills a roster with the linked user template preferences|
-|[**getRoster**](#getroster) | **GET** /roster/{id} | Get a specific roster by id|
-|[**getRosterResponsibles**](#getrosterresponsibles) | **GET** /roster/{id}/responsibles | Get roster responsibles|
-|[**getRosterTemplate**](#getrostertemplate) | **GET** /roster/template/{id} | Get a roster template by ID|
-|[**getRosterTemplateShiftPreferences**](#getrostertemplateshiftpreferences) | **GET** /roster/template/shift-preference | Gets shift preferences filtered by user and template|
-|[**getRosterTemplates**](#getrostertemplates) | **GET** /roster/template | Get all rosters templates or query by organ ID|
-|[**getRosters**](#getrosters) | **GET** /roster | Get all rosters or query by date and organ|
-|[**updateRoster**](#updateroster) | **PATCH** /roster/{id} | Update a roster|
-|[**updateRosterTemplate**](#updaterostertemplate) | **PUT** /roster/template/{id} | Updates a roster template by ID|
-|[**updateRosterTemplateShift**](#updaterostertemplateshift) | **PATCH** /roster/template/shift/{id} | Updates a roster template shift by ID|
-|[**updateRosterTemplateShiftPreference**](#updaterostertemplateshiftpreference) | **PATCH** /roster/template/shift-preference/{id} | Updates a roster template shift preference by ID|
+|[**createRoster**](#createroster) | **POST** /organs/{organId}/rosters | CreateRoster a new roster|
+|[**createRosterResponsible**](#createrosterresponsible) | **POST** /rosters/{rosterId}/responsibles | Create a roster responsible|
+|[**deleteRoster**](#deleteroster) | **DELETE** /rosters/{rosterId} | DeleteRoster a roster|
+|[**deleteRosterResponsible**](#deleterosterresponsible) | **DELETE** /rosters/{rosterId}/responsibles/{userId} | Delete a roster responsible|
+|[**fillRoster**](#fillroster) | **POST** /rosters/{rosterId}/fill | Fills a roster with the linked user template preferences|
+|[**getRoster**](#getroster) | **GET** /rosters/{rosterId} | Get a specific roster by id|
+|[**getRosterResponsibles**](#getrosterresponsibles) | **GET** /rosters/{rosterId}/responsibles | Get roster responsibles|
+|[**getRosters**](#getrosters) | **GET** /organs/{organId}/rosters | Get all rosters of an organ, optionally filtered by date or archived state|
+|[**updateRoster**](#updateroster) | **PATCH** /rosters/{rosterId} | Update a roster|
 
 # **createRoster**
 > Roster createRoster(createParams)
@@ -39,9 +30,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
+let organId: number; //Organ ID (default to undefined)
 let createParams: RosterCreateRequest; //Roster input
 
 const { status, data } = await apiInstance.createRoster(
+    organId,
     createParams
 );
 ```
@@ -51,6 +44,7 @@ const { status, data } = await apiInstance.createRoster(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **createParams** | **RosterCreateRequest**| Roster input | |
+| **organId** | [**number**] | Organ ID | defaults to undefined|
 
 
 ### Return type
@@ -92,11 +86,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 let params: RosterResponsibleCreateRequest; //User to assign as responsible
 
 const { status, data } = await apiInstance.createRosterResponsible(
-    id,
+    rosterId,
     params
 );
 ```
@@ -106,7 +100,7 @@ const { status, data } = await apiInstance.createRosterResponsible(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **params** | **RosterResponsibleCreateRequest**| User to assign as responsible | |
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -133,110 +127,6 @@ const { status, data } = await apiInstance.createRosterResponsible(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **createRosterTemplate**
-> Array<RosterTemplate> createRosterTemplate()
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration,
-    TemplateCreateRequest
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let params: TemplateCreateRequest; //Template Params (optional)
-
-const { status, data } = await apiInstance.createRosterTemplate(
-    params
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **params** | **TemplateCreateRequest**| Template Params | |
-
-
-### Return type
-
-**Array<RosterTemplate>**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Created Template |  -  |
-|**400** | Invalid request |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **createRosterTemplateShiftPreference**
-> RosterTemplateShiftPreference createRosterTemplateShiftPreference(params)
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration,
-    TemplateShiftPreferenceCreateRequest
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let params: TemplateShiftPreferenceCreateRequest; //Creation params
-
-const { status, data } = await apiInstance.createRosterTemplateShiftPreference(
-    params
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **params** | **TemplateShiftPreferenceCreateRequest**| Creation params | |
-
-
-### Return type
-
-**RosterTemplateShiftPreference**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**201** | Created |  -  |
-|**400** | Bad Request |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
 # **deleteRoster**
 > string deleteRoster()
 
@@ -252,10 +142,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 
 const { status, data } = await apiInstance.deleteRoster(
-    id
+    rosterId
 );
 ```
 
@@ -263,7 +153,7 @@ const { status, data } = await apiInstance.deleteRoster(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -305,11 +195,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 let userId: number; //User ID (default to undefined)
 
 const { status, data } = await apiInstance.deleteRosterResponsible(
-    id,
+    rosterId,
     userId
 );
 ```
@@ -318,7 +208,7 @@ const { status, data } = await apiInstance.deleteRosterResponsible(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 | **userId** | [**number**] | User ID | defaults to undefined|
 
 
@@ -346,58 +236,6 @@ const { status, data } = await apiInstance.deleteRosterResponsible(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **deleteRosterTemplate**
-> string deleteRosterTemplate()
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let id: number; //Template ID (default to undefined)
-
-const { status, data } = await apiInstance.deleteRosterTemplate(
-    id
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Template ID | defaults to undefined|
-
-
-### Return type
-
-**string**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | OK |  -  |
-|**400** | Bad Request |  -  |
-|**404** | Not Found |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
 # **fillRoster**
 > Array<RosterAnswer> fillRoster()
 
@@ -413,10 +251,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 
 const { status, data } = await apiInstance.fillRoster(
-    id
+    rosterId
 );
 ```
 
@@ -424,7 +262,7 @@ const { status, data } = await apiInstance.fillRoster(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -465,10 +303,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 
 const { status, data } = await apiInstance.getRoster(
-    id
+    rosterId
 );
 ```
 
@@ -476,7 +314,7 @@ const { status, data } = await apiInstance.getRoster(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -518,10 +356,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 
 const { status, data } = await apiInstance.getRosterResponsibles(
-    id
+    rosterId
 );
 ```
 
@@ -529,7 +367,7 @@ const { status, data } = await apiInstance.getRosterResponsibles(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -556,163 +394,6 @@ const { status, data } = await apiInstance.getRosterResponsibles(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **getRosterTemplate**
-> RosterTemplate getRosterTemplate()
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let id: number; //Template ID (default to undefined)
-
-const { status, data } = await apiInstance.getRosterTemplate(
-    id
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Template ID | defaults to undefined|
-
-
-### Return type
-
-**RosterTemplate**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | OK |  -  |
-|**400** | Bad Request |  -  |
-|**404** | Not Found |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **getRosterTemplateShiftPreferences**
-> Array<RosterTemplateShiftPreference> getRosterTemplateShiftPreferences()
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let userId: number; //User ID (default to undefined)
-let templateId: number; //Template ID (default to undefined)
-
-const { status, data } = await apiInstance.getRosterTemplateShiftPreferences(
-    userId,
-    templateId
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **userId** | [**number**] | User ID | defaults to undefined|
-| **templateId** | [**number**] | Template ID | defaults to undefined|
-
-
-### Return type
-
-**Array<RosterTemplateShiftPreference>**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | OK |  -  |
-|**400** | Bad Request |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **getRosterTemplates**
-> Array<RosterTemplate> getRosterTemplates()
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let organId: number; // (optional) (default to undefined)
-
-const { status, data } = await apiInstance.getRosterTemplates(
-    organId
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **organId** | [**number**] |  | (optional) defaults to undefined|
-
-
-### Return type
-
-**Array<RosterTemplate>**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | OK |  -  |
-|**400** | Bad Request |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
 # **getRosters**
 > Array<Roster> getRosters()
 
@@ -728,16 +409,16 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
+let organId: number; //Organ ID (default to undefined)
 let archived: boolean; // (optional) (default to undefined)
 let date: string; // (optional) (default to undefined)
 let id: number; // (optional) (default to undefined)
-let organId: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.getRosters(
+    organId,
     archived,
     date,
-    id,
-    organId
+    id
 );
 ```
 
@@ -745,10 +426,10 @@ const { status, data } = await apiInstance.getRosters(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **organId** | [**number**] | Organ ID | defaults to undefined|
 | **archived** | [**boolean**] |  | (optional) defaults to undefined|
 | **date** | [**string**] |  | (optional) defaults to undefined|
 | **id** | [**number**] |  | (optional) defaults to undefined|
-| **organId** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -789,11 +470,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 let updateParams: RosterUpdateRequest; //Roster input
 
 const { status, data } = await apiInstance.updateRoster(
-    id,
+    rosterId,
     updateParams
 );
 ```
@@ -803,7 +484,7 @@ const { status, data } = await apiInstance.updateRoster(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **updateParams** | **RosterUpdateRequest**| Roster input | |
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -825,174 +506,6 @@ const { status, data } = await apiInstance.updateRoster(
 |-------------|-------------|------------------|
 |**200** | OK |  -  |
 |**400** | Bad Request |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **updateRosterTemplate**
-> RosterTemplate updateRosterTemplate()
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration,
-    TemplateUpdateParams
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let id: number; //Template ID (default to undefined)
-let params: TemplateUpdateParams; //Update params (optional)
-
-const { status, data } = await apiInstance.updateRosterTemplate(
-    id,
-    params
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **params** | **TemplateUpdateParams**| Update params | |
-| **id** | [**number**] | Template ID | defaults to undefined|
-
-
-### Return type
-
-**RosterTemplate**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | OK |  -  |
-|**400** | Bad Request |  -  |
-|**404** | Not Found |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **updateRosterTemplateShift**
-> RosterTemplateShift updateRosterTemplateShift(params)
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration,
-    TemplateShiftUpdateRequest
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let id: number; //Shift ID (default to undefined)
-let params: TemplateShiftUpdateRequest; //Update params
-
-const { status, data } = await apiInstance.updateRosterTemplateShift(
-    id,
-    params
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **params** | **TemplateShiftUpdateRequest**| Update params | |
-| **id** | [**number**] | Shift ID | defaults to undefined|
-
-
-### Return type
-
-**RosterTemplateShift**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | OK |  -  |
-|**400** | Bad Request |  -  |
-|**404** | Not Found |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **updateRosterTemplateShiftPreference**
-> RosterTemplateShiftPreference updateRosterTemplateShiftPreference(params)
-
-
-### Example
-
-```typescript
-import {
-    RosterApi,
-    Configuration,
-    TemplateShiftPreferenceUpdateRequest
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new RosterApi(configuration);
-
-let id: number; //Preference ID (default to undefined)
-let params: TemplateShiftPreferenceUpdateRequest; //Update params
-
-const { status, data } = await apiInstance.updateRosterTemplateShiftPreference(
-    id,
-    params
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **params** | **TemplateShiftPreferenceUpdateRequest**| Update params | |
-| **id** | [**number**] | Preference ID | defaults to undefined|
-
-
-### Return type
-
-**RosterTemplateShiftPreference**
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | OK |  -  |
-|**400** | Bad Request |  -  |
-|**404** | Not Found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

@@ -4,12 +4,12 @@ All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**createShiftGroup**](#createshiftgroup) | **POST** /roster/shift-groups | Create a new shift group|
-|[**getShiftGroup**](#getshiftgroup) | **GET** /roster/shift-groups/{id} | Get a specific shift group by ID|
-|[**getShiftGroupPriorities**](#getshiftgrouppriorities) | **GET** /roster/shift-groups/{id}/priority | Get a shift group priorities for a shift group|
-|[**getShiftGroups**](#getshiftgroups) | **GET** /roster/shift-groups | Get all shift groups for an organ|
-|[**pushUserToBottom**](#pushusertobottom) | **POST** /roster/shift-groups/{id}/push-to-bottom | Manually push a user to the bottom of a shift group\&#39;s ordering, as if just assigned|
-|[**updateShiftGroupPriority**](#updateshiftgrouppriority) | **PUT** /roster/shift-groups/{id}/priority | Update a shift group priority|
+|[**createShiftGroup**](#createshiftgroup) | **POST** /organs/{organId}/shift-groups | Create a new shift group|
+|[**getShiftGroup**](#getshiftgroup) | **GET** /shift-groups/{shiftGroupId} | Get a specific shift group by ID|
+|[**getShiftGroupPriorities**](#getshiftgrouppriorities) | **GET** /shift-groups/{shiftGroupId}/priorities | Get a shift group priorities for a shift group|
+|[**getShiftGroups**](#getshiftgroups) | **GET** /organs/{organId}/shift-groups | Get all shift groups for an organ|
+|[**pushUserToBottom**](#pushusertobottom) | **POST** /shift-groups/{shiftGroupId}/push-to-bottom | Manually push a user to the bottom of a shift group\&#39;s ordering, as if just assigned|
+|[**updateShiftGroupPriority**](#updateshiftgrouppriority) | **PUT** /shift-groups/{shiftGroupId}/priorities | Update a shift group priority|
 
 # **createShiftGroup**
 > ShiftGroup createShiftGroup(params)
@@ -27,9 +27,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new ShiftGroupApi(configuration);
 
+let organId: number; //Organ ID (default to undefined)
 let params: ShiftGroupCreateRequest; //Shift Group Details
 
 const { status, data } = await apiInstance.createShiftGroup(
+    organId,
     params
 );
 ```
@@ -39,6 +41,7 @@ const { status, data } = await apiInstance.createShiftGroup(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **params** | **ShiftGroupCreateRequest**| Shift Group Details | |
+| **organId** | [**number**] | Organ ID | defaults to undefined|
 
 
 ### Return type
@@ -78,10 +81,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new ShiftGroupApi(configuration);
 
-let id: number; //Shift Group ID (default to undefined)
+let shiftGroupId: number; //Shift Group ID (default to undefined)
 
 const { status, data } = await apiInstance.getShiftGroup(
-    id
+    shiftGroupId
 );
 ```
 
@@ -89,7 +92,7 @@ const { status, data } = await apiInstance.getShiftGroup(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Shift Group ID | defaults to undefined|
+| **shiftGroupId** | [**number**] | Shift Group ID | defaults to undefined|
 
 
 ### Return type
@@ -129,10 +132,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new ShiftGroupApi(configuration);
 
-let id: number; //ShiftGroup ID (default to undefined)
+let shiftGroupId: number; //ShiftGroup ID (default to undefined)
 
 const { status, data } = await apiInstance.getShiftGroupPriorities(
-    id
+    shiftGroupId
 );
 ```
 
@@ -140,7 +143,7 @@ const { status, data } = await apiInstance.getShiftGroupPriorities(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | ShiftGroup ID | defaults to undefined|
+| **shiftGroupId** | [**number**] | ShiftGroup ID | defaults to undefined|
 
 
 ### Return type
@@ -232,11 +235,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new ShiftGroupApi(configuration);
 
-let id: number; //Shift Group ID (default to undefined)
+let shiftGroupId: number; //Shift Group ID (default to undefined)
 let params: PushToBottomRequest; //User to push to the bottom
 
 const { status, data } = await apiInstance.pushUserToBottom(
-    id,
+    shiftGroupId,
     params
 );
 ```
@@ -246,7 +249,7 @@ const { status, data } = await apiInstance.pushUserToBottom(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **params** | **PushToBottomRequest**| User to push to the bottom | |
-| **id** | [**number**] | Shift Group ID | defaults to undefined|
+| **shiftGroupId** | [**number**] | Shift Group ID | defaults to undefined|
 
 
 ### Return type
@@ -287,11 +290,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new ShiftGroupApi(configuration);
 
-let id: number; //ShiftGroup ID (default to undefined)
+let shiftGroupId: number; //ShiftGroup ID (default to undefined)
 let updateParams: GroupPriorityUpdateParam; //Update parameters
 
 const { status, data } = await apiInstance.updateShiftGroupPriority(
-    id,
+    shiftGroupId,
     updateParams
 );
 ```
@@ -301,7 +304,7 @@ const { status, data } = await apiInstance.updateShiftGroupPriority(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **updateParams** | **GroupPriorityUpdateParam**| Update parameters | |
-| **id** | [**number**] | ShiftGroup ID | defaults to undefined|
+| **shiftGroupId** | [**number**] | ShiftGroup ID | defaults to undefined|
 
 
 ### Return type

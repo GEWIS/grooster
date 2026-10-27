@@ -5,7 +5,6 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**rosterId** | **number** |  | [optional] [default to undefined]
 **rosterShiftId** | **number** |  | [optional] [default to undefined]
 **userId** | **number** |  | [optional] [default to undefined]
 **value** | **string** |  | [optional] [default to undefined]
@@ -16,7 +15,6 @@ Name | Type | Description | Notes
 import { AnswerCreateRequest } from './api';
 
 const instance: AnswerCreateRequest = {
-    rosterId,
     rosterShiftId,
     userId,
     value,

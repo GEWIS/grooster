@@ -4,10 +4,10 @@ All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**exportRosterIdGet**](#exportrosteridget) | **GET** /export/roster/{id} | Export roster assignments as PNG|
+|[**exportRoster**](#exportroster) | **GET** /rosters/{rosterId}/export | Export roster assignments as PNG|
 
-# **exportRosterIdGet**
-> File exportRosterIdGet()
+# **exportRoster**
+> File exportRoster()
 
 Generates and downloads a PNG image containing the shift assignments for a specific roster.
 
@@ -22,10 +22,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new ExportApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 
-const { status, data } = await apiInstance.exportRosterIdGet(
-    id
+const { status, data } = await apiInstance.exportRoster(
+    rosterId
 );
 ```
 
@@ -33,7 +33,7 @@ const { status, data } = await apiInstance.exportRosterIdGet(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type

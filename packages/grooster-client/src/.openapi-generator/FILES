@@ -9,9 +9,9 @@ docs/AnswerUpdateRequest.md
 docs/AuthApi.md
 docs/CommentCreateRequest.md
 docs/ExportApi.md
-docs/GEWISRoosterInternalModelsGroupPriority.md
-docs/GEWISRoosterInternalModelsOrganRole.md
 docs/GroupPriorityUpdateParam.md
+docs/ModelsGroupPriority.md
+docs/ModelsOrganRole.md
 docs/Organ.md
 docs/OrganApi.md
 docs/PushToBottomRequest.md
@@ -27,6 +27,7 @@ docs/RosterResponsibleCreateRequest.md
 docs/RosterShift.md
 docs/RosterShiftApi.md
 docs/RosterTemplate.md
+docs/RosterTemplateApi.md
 docs/RosterTemplateShift.md
 docs/RosterTemplateShiftPreference.md
 docs/RosterUpdateRequest.md

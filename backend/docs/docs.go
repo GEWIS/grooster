@@ -114,59 +114,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/export/roster/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Generates and downloads a PNG image containing the shift assignments for a specific roster.",
-                "produces": [
-                    "image/png"
-                ],
-                "tags": [
-                    "Export"
-                ],
-                "summary": "Export roster assignments as PNG",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Roster ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "file"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid ID format",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/organ/{id}": {
+        "/organs/{organId}/members": {
             "get": {
                 "security": [
                     {
@@ -189,7 +137,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Organ ID",
-                        "name": "id",
+                        "name": "organId",
                         "in": "path",
                         "required": true
                     }
@@ -219,7 +167,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/organ/{id}/member/{userId}": {
+        "/organs/{organId}/members/{userId}": {
             "get": {
                 "security": [
                     {
@@ -237,11 +185,12 @@ const docTemplate = `{
                     "Organ"
                 ],
                 "summary": "Get settings for a user within an organ",
+                "operationId": "getMemberSettings",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Organ ID",
-                        "name": "id",
+                        "name": "organId",
                         "in": "path",
                         "required": true
                     },
@@ -291,11 +240,12 @@ const docTemplate = `{
                     "Organ"
                 ],
                 "summary": "Update settings for a user within an organ",
+                "operationId": "updateMemberSettings",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Organ ID",
-                        "name": "id",
+                        "name": "organId",
                         "in": "path",
                         "required": true
                     },
@@ -332,7 +282,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/organ/{id}/member/{userId}/role": {
+        "/organs/{organId}/members/{userId}/role": {
             "patch": {
                 "security": [
                     {
@@ -350,11 +300,12 @@ const docTemplate = `{
                     "Organ"
                 ],
                 "summary": "Update the role of a user within a specific organ",
+                "operationId": "updateMemberRole",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Organ ID",
-                        "name": "id",
+                        "name": "organId",
                         "in": "path",
                         "required": true
                     },
@@ -397,7 +348,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/roster": {
+        "/organs/{organId}/rosters": {
             "get": {
                 "security": [
                     {
@@ -413,9 +364,16 @@ const docTemplate = `{
                 "tags": [
                     "Roster"
                 ],
-                "summary": "Get all rosters or query by date and organ",
+                "summary": "Get all rosters of an organ, optionally filtered by date or archived state",
                 "operationId": "getRosters",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organ ID",
+                        "name": "organId",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "boolean",
                         "name": "archived",
@@ -429,11 +387,6 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "organId",
                         "in": "query"
                     }
                 ],
@@ -474,6 +427,13 @@ const docTemplate = `{
                 "operationId": "createRoster",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Organ ID",
+                        "name": "organId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Roster input",
                         "name": "createParams",
                         "in": "body",
@@ -499,367 +459,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/roster/answer": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster Answer"
-                ],
-                "summary": "Create a new roster shift answer",
-                "operationId": "createRosterAnswer",
-                "parameters": [
-                    {
-                        "description": "Roster answer input",
-                        "name": "createParams",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/AnswerCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/RosterAnswer"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/answer/{id}": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster Answer"
-                ],
-                "summary": "Updates a roster answer with the new value",
-                "operationId": "updateRosterAnswer",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Roster Answer ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "New answer value",
-                        "name": "updateParams",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/AnswerUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/RosterAnswer"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/comment": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster Comment"
-                ],
-                "summary": "Get all comments for a roster",
-                "operationId": "getRosterComments",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Roster ID",
-                        "name": "rosterId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/RosterComment"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster Comment"
-                ],
-                "summary": "Create a new roster comment",
-                "operationId": "createRosterComment",
-                "parameters": [
-                    {
-                        "description": "Roster comment input",
-                        "name": "createParams",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/CommentCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/RosterComment"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/saved-shift/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Saved Shift"
-                ],
-                "summary": "Get all saved shifts for a specific roster",
-                "operationId": "getSavedRoster",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Roster ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Saved Shift Response",
-                        "schema": {
-                            "$ref": "#/definitions/SavedShiftResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "SavedShift not found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Saved Shift"
-                ],
-                "summary": "Update a specific saved shift",
-                "operationId": "updateSavedShift",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "SavedShift ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update data",
-                        "name": "updateParams",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/SavedShiftUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/SavedShift"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "SavedShift not found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/shift": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster Shift"
-                ],
-                "summary": "Create a new roster shift",
-                "operationId": "createRosterShift",
-                "parameters": [
-                    {
-                        "description": "Roster shift input",
-                        "name": "createParams",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ShiftCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/RosterShift"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/shift-groups": {
+        "/organs/{organId}/shift-groups": {
             "get": {
                 "security": [
                     {
@@ -878,8 +478,8 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Organ ID",
-                        "name": "organ_id",
-                        "in": "query",
+                        "name": "organId",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -920,6 +520,13 @@ const docTemplate = `{
                 "operationId": "createShiftGroup",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Organ ID",
+                        "name": "organId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Shift Group Details",
                         "name": "params",
                         "in": "body",
@@ -945,47 +552,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/roster/shift-groups/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ShiftGroup"
-                ],
-                "summary": "Get a specific shift group by ID",
-                "operationId": "getShiftGroup",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Shift Group ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/ShiftGroup"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/shift-groups/{id}/priority": {
+        "/organs/{organId}/templates": {
             "get": {
                 "security": [
                     {
@@ -999,268 +566,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "ShiftGroup"
+                    "Roster Template"
                 ],
-                "summary": "Get a shift group priorities for a shift group",
-                "operationId": "getShiftGroupPriorities",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ShiftGroup ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/ShiftGroupPriority"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ShiftGroup"
-                ],
-                "summary": "Update a shift group priority",
-                "operationId": "updateShiftGroupPriority",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ShiftGroup ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update parameters",
-                        "name": "updateParams",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/GroupPriorityUpdateParam"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/ShiftGroupPriority"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "SavedShift not found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/shift-groups/{id}/push-to-bottom": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ShiftGroup"
-                ],
-                "summary": "Manually push a user to the bottom of a shift group's ordering, as if just assigned",
-                "operationId": "pushUserToBottom",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Shift Group ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "User to push to the bottom",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/PushToBottomRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/shift/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster Shift"
-                ],
-                "summary": "Deletes a roster shift",
-                "operationId": "deleteRosterShift",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Roster Answer ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster Shift"
-                ],
-                "summary": "Update a roster shift",
-                "operationId": "updateRosterShift",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Roster Shift ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update input",
-                        "name": "updateParams",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ShiftUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/RosterShift"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/template": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster"
-                ],
-                "summary": "Get all rosters templates or query by organ ID",
+                "summary": "Get all roster templates of an organ",
                 "operationId": "getRosterTemplates",
                 "parameters": [
                     {
                         "type": "integer",
+                        "description": "Organ ID",
                         "name": "organId",
-                        "in": "query"
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1294,11 +610,18 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Roster"
+                    "Roster Template"
                 ],
                 "summary": "Creates a template of a roster by defining the name of the shifts",
                 "operationId": "createRosterTemplate",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organ ID",
+                        "name": "organId",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Template Params",
                         "name": "params",
@@ -1327,370 +650,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/roster/template/shift-preference": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster"
-                ],
-                "summary": "Gets shift preferences filtered by user and template",
-                "operationId": "getRosterTemplateShiftPreferences",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "userId",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Template ID",
-                        "name": "templateId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/RosterTemplateShiftPreference"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster"
-                ],
-                "summary": "Creates a roster template shift preference",
-                "operationId": "createRosterTemplateShiftPreference",
-                "parameters": [
-                    {
-                        "description": "Creation params",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/TemplateShiftPreferenceCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/RosterTemplateShiftPreference"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/template/shift-preference/{id}": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster"
-                ],
-                "summary": "Updates a roster template shift preference by ID",
-                "operationId": "updateRosterTemplateShiftPreference",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Preference ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update params",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/TemplateShiftPreferenceUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/RosterTemplateShiftPreference"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/template/shift/{id}": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster"
-                ],
-                "summary": "Updates a roster template shift by ID",
-                "operationId": "updateRosterTemplateShift",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Shift ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update params",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/TemplateShiftUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/RosterTemplateShift"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/template/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster"
-                ],
-                "summary": "Get a roster template by ID",
-                "operationId": "getRosterTemplate",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Template ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/RosterTemplate"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster"
-                ],
-                "summary": "Updates a roster template by ID",
-                "operationId": "updateRosterTemplate",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Template ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update params",
-                        "name": "params",
-                        "in": "body",
-                        "schema": {
-                            "$ref": "#/definitions/TemplateUpdateParams"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/RosterTemplate"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Roster"
-                ],
-                "summary": "Deletes a roster template by ID",
-                "operationId": "deleteRosterTemplate",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Template ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/roster/{id}": {
+        "/rosters/{rosterId}": {
             "get": {
                 "security": [
                     {
@@ -1712,7 +672,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Roster ID",
-                        "name": "id",
+                        "name": "rosterId",
                         "in": "path",
                         "required": true
                     }
@@ -1759,7 +719,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Roster ID",
-                        "name": "id",
+                        "name": "rosterId",
                         "in": "path",
                         "required": true
                     }
@@ -1806,7 +766,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Roster ID",
-                        "name": "id",
+                        "name": "rosterId",
                         "in": "path",
                         "required": true
                     },
@@ -1836,7 +796,291 @@ const docTemplate = `{
                 }
             }
         },
-        "/roster/{id}/fill": {
+        "/rosters/{rosterId}/answers": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Answer"
+                ],
+                "summary": "Create a new roster shift answer",
+                "operationId": "createRosterAnswer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Roster answer input",
+                        "name": "createParams",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AnswerCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/RosterAnswer"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/rosters/{rosterId}/answers/{answerId}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Answer"
+                ],
+                "summary": "Updates a roster answer with the new value",
+                "operationId": "updateRosterAnswer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Roster Answer ID",
+                        "name": "answerId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New answer value",
+                        "name": "updateParams",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AnswerUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/RosterAnswer"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/rosters/{rosterId}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Comment"
+                ],
+                "summary": "Get all comments for a roster",
+                "operationId": "getRosterComments",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/RosterComment"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Comment"
+                ],
+                "summary": "Create a new roster comment",
+                "operationId": "createRosterComment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Roster comment input",
+                        "name": "createParams",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CommentCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/RosterComment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/rosters/{rosterId}/export": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generates and downloads a PNG image containing the shift assignments for a specific roster.",
+                "produces": [
+                    "image/png"
+                ],
+                "tags": [
+                    "Export"
+                ],
+                "summary": "Export roster assignments as PNG",
+                "operationId": "exportRoster",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/rosters/{rosterId}/fill": {
             "post": {
                 "security": [
                     {
@@ -1858,7 +1102,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Roster ID",
-                        "name": "id",
+                        "name": "rosterId",
                         "in": "path",
                         "required": true
                     }
@@ -1888,7 +1132,56 @@ const docTemplate = `{
                 }
             }
         },
-        "/roster/{id}/responsibles": {
+        "/rosters/{rosterId}/lock": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Saved Shift"
+                ],
+                "summary": "Lock a specific roster, storing its current assignments as saved shifts",
+                "operationId": "lockRoster",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/rosters/{rosterId}/responsibles": {
             "get": {
                 "security": [
                     {
@@ -1911,7 +1204,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Roster ID",
-                        "name": "id",
+                        "name": "rosterId",
                         "in": "path",
                         "required": true
                     }
@@ -1968,7 +1261,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Roster ID",
-                        "name": "id",
+                        "name": "rosterId",
                         "in": "path",
                         "required": true
                     },
@@ -2010,7 +1303,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/roster/{id}/responsibles/{userId}": {
+        "/rosters/{rosterId}/responsibles/{userId}": {
             "delete": {
                 "security": [
                     {
@@ -2033,7 +1326,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Roster ID",
-                        "name": "id",
+                        "name": "rosterId",
                         "in": "path",
                         "required": true
                     },
@@ -2076,8 +1369,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/roster/{id}/save": {
-            "post": {
+        "/rosters/{rosterId}/saved-shifts": {
+            "get": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -2092,13 +1385,588 @@ const docTemplate = `{
                 "tags": [
                     "Saved Shift"
                 ],
-                "summary": "Save a specific roster",
-                "operationId": "rosterSave",
+                "summary": "Get all saved shifts for a specific roster",
+                "operationId": "getSavedShifts",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Roster ID",
-                        "name": "id",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved Shift Response",
+                        "schema": {
+                            "$ref": "#/definitions/SavedShiftResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "SavedShift not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/rosters/{rosterId}/saved-shifts/{savedShiftId}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Saved Shift"
+                ],
+                "summary": "Update a specific saved shift",
+                "operationId": "updateSavedShift",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "SavedShift ID",
+                        "name": "savedShiftId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update data",
+                        "name": "updateParams",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SavedShiftUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SavedShift"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "SavedShift not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/rosters/{rosterId}/shifts": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Shift"
+                ],
+                "summary": "Create a new roster shift",
+                "operationId": "createRosterShift",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Roster shift input",
+                        "name": "createParams",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ShiftCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/RosterShift"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/rosters/{rosterId}/shifts/{shiftId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Shift"
+                ],
+                "summary": "Deletes a roster shift",
+                "operationId": "deleteRosterShift",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Roster Shift ID",
+                        "name": "shiftId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Shift"
+                ],
+                "summary": "Update a roster shift",
+                "operationId": "updateRosterShift",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Roster ID",
+                        "name": "rosterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Roster Shift ID",
+                        "name": "shiftId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update input",
+                        "name": "updateParams",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ShiftUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/RosterShift"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/shift-groups/{shiftGroupId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ShiftGroup"
+                ],
+                "summary": "Get a specific shift group by ID",
+                "operationId": "getShiftGroup",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Shift Group ID",
+                        "name": "shiftGroupId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ShiftGroup"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/shift-groups/{shiftGroupId}/priorities": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ShiftGroup"
+                ],
+                "summary": "Get a shift group priorities for a shift group",
+                "operationId": "getShiftGroupPriorities",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ShiftGroup ID",
+                        "name": "shiftGroupId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ShiftGroupPriority"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ShiftGroup"
+                ],
+                "summary": "Update a shift group priority",
+                "operationId": "updateShiftGroupPriority",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ShiftGroup ID",
+                        "name": "shiftGroupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update parameters",
+                        "name": "updateParams",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/GroupPriorityUpdateParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ShiftGroupPriority"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "SavedShift not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/shift-groups/{shiftGroupId}/push-to-bottom": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ShiftGroup"
+                ],
+                "summary": "Manually push a user to the bottom of a shift group's ordering, as if just assigned",
+                "operationId": "pushUserToBottom",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Shift Group ID",
+                        "name": "shiftGroupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User to push to the bottom",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/PushToBottomRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/templates/{templateId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Template"
+                ],
+                "summary": "Get a roster template by ID",
+                "operationId": "getRosterTemplate",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "templateId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/RosterTemplate"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Template"
+                ],
+                "summary": "Updates a roster template by ID",
+                "operationId": "updateRosterTemplate",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "templateId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update params",
+                        "name": "params",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/TemplateUpdateParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/RosterTemplate"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Template"
+                ],
+                "summary": "Deletes a roster template by ID",
+                "operationId": "deleteRosterTemplate",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "templateId",
                         "in": "path",
                         "required": true
                     }
@@ -2125,7 +1993,240 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/": {
+        "/templates/{templateId}/preferences": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Template"
+                ],
+                "summary": "Gets shift preferences of a template filtered by user",
+                "operationId": "getRosterTemplateShiftPreferences",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "templateId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/RosterTemplateShiftPreference"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Template"
+                ],
+                "summary": "Creates a roster template shift preference",
+                "operationId": "createRosterTemplateShiftPreference",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "templateId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Creation params",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TemplateShiftPreferenceCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/RosterTemplateShiftPreference"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/templates/{templateId}/preferences/{preferenceId}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Template"
+                ],
+                "summary": "Updates a roster template shift preference by ID",
+                "operationId": "updateRosterTemplateShiftPreference",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "templateId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Preference ID",
+                        "name": "preferenceId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update params",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TemplateShiftPreferenceUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/RosterTemplateShiftPreference"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/templates/{templateId}/shifts/{shiftId}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roster Template"
+                ],
+                "summary": "Updates a roster template shift by ID",
+                "operationId": "updateRosterTemplateShift",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "templateId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Template Shift ID",
+                        "name": "shiftId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update params",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TemplateShiftUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/RosterTemplateShift"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
             "get": {
                 "security": [
                     {
@@ -2143,6 +2244,7 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "Get all users with optional filtering",
+                "operationId": "getUsers",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2177,9 +2279,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/user/create": {
+            },
             "post": {
                 "security": [
                     {
@@ -2197,6 +2297,7 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "CreateRoster a new user",
+                "operationId": "createUser",
                 "parameters": [
                     {
                         "description": "User input",
@@ -2224,7 +2325,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/{id}": {
+        "/users/{userId}": {
             "get": {
                 "security": [
                     {
@@ -2242,11 +2343,12 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "Get user by ID",
+                "operationId": "getUser",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "User ID",
-                        "name": "id",
+                        "name": "userId",
                         "in": "path",
                         "required": true
                     }
@@ -2294,11 +2396,12 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "DeleteRoster a user",
+                "operationId": "deleteUser",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "User ID",
-                        "name": "id",
+                        "name": "userId",
                         "in": "path",
                         "required": true
                     }
@@ -2330,9 +2433,6 @@ const docTemplate = `{
         "AnswerCreateRequest": {
             "type": "object",
             "properties": {
-                "rosterId": {
-                    "type": "integer"
-                },
                 "rosterShiftId": {
                     "type": "integer"
                 },
@@ -2362,39 +2462,10 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 250
                 },
-                "rosterId": {
-                    "type": "integer"
-                },
                 "userId": {
                     "type": "integer"
                 }
             }
-        },
-        "GEWIS-Rooster_internal_models.GroupPriority": {
-            "type": "integer",
-            "enum": [
-                1,
-                2,
-                3
-            ],
-            "x-enum-varnames": [
-                "Low",
-                "Default",
-                "High"
-            ]
-        },
-        "GEWIS-Rooster_internal_models.OrganRole": {
-            "type": "string",
-            "enum": [
-                "owner",
-                "admin",
-                "member"
-            ],
-            "x-enum-varnames": [
-                "RoleOwner",
-                "RoleAdmin",
-                "RoleMember"
-            ]
         },
         "GroupPriorityUpdateParam": {
             "type": "object",
@@ -2404,7 +2475,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "priority": {
-                    "$ref": "#/definitions/GEWIS-Rooster_internal_models.GroupPriority"
+                    "$ref": "#/definitions/models.GroupPriority"
                 },
                 "userId": {
                     "type": "integer"
@@ -2555,9 +2626,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                },
-                "organId": {
-                    "type": "integer"
                 },
                 "shifts": {
                     "type": "array",
@@ -2789,9 +2857,6 @@ const docTemplate = `{
             "properties": {
                 "name": {
                     "type": "string"
-                },
-                "rosterId": {
-                    "type": "integer"
                 }
             }
         },
@@ -2821,15 +2886,11 @@ const docTemplate = `{
         "ShiftGroupCreateRequest": {
             "type": "object",
             "required": [
-                "name",
-                "organId"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string"
-                },
-                "organId": {
-                    "type": "integer"
                 }
             }
         },
@@ -2843,7 +2904,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "priority": {
-                    "$ref": "#/definitions/GEWIS-Rooster_internal_models.GroupPriority"
+                    "$ref": "#/definitions/models.GroupPriority"
                 },
                 "shiftGroupId": {
                     "type": "integer"
@@ -2872,9 +2933,6 @@ const docTemplate = `{
             "properties": {
                 "name": {
                     "type": "string"
-                },
-                "organId": {
-                    "type": "integer"
                 },
                 "shifts": {
                     "type": "array",
@@ -2942,7 +3000,7 @@ const docTemplate = `{
                     ],
                     "allOf": [
                         {
-                            "$ref": "#/definitions/GEWIS-Rooster_internal_models.OrganRole"
+                            "$ref": "#/definitions/models.OrganRole"
                         }
                     ]
                 }
@@ -3012,7 +3070,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "role": {
-                    "$ref": "#/definitions/GEWIS-Rooster_internal_models.OrganRole"
+                    "$ref": "#/definitions/models.OrganRole"
                 },
                 "userId": {
                     "type": "integer"
@@ -3021,6 +3079,32 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "models.GroupPriority": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "Low",
+                "Default",
+                "High"
+            ]
+        },
+        "models.OrganRole": {
+            "type": "string",
+            "enum": [
+                "owner",
+                "admin",
+                "member"
+            ],
+            "x-enum-varnames": [
+                "RoleOwner",
+                "RoleAdmin",
+                "RoleMember"
+            ]
         }
     },
     "securityDefinitions": {

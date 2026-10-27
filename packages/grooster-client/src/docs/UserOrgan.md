@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **organId** | **number** |  | [optional] [default to undefined]
-**role** | [**GEWISRoosterInternalModelsOrganRole**](GEWISRoosterInternalModelsOrganRole.md) |  | [optional] [default to undefined]
+**role** | [**ModelsOrganRole**](ModelsOrganRole.md) |  | [optional] [default to undefined]
 **userId** | **number** |  | [optional] [default to undefined]
 **username** | **string** |  | [optional] [default to undefined]
 

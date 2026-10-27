@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **createdAt** | **string** |  | [optional] [default to undefined]
 **id** | **number** |  | [optional] [default to undefined]
-**priority** | [**GEWISRoosterInternalModelsGroupPriority**](GEWISRoosterInternalModelsGroupPriority.md) |  | [optional] [default to undefined]
+**priority** | [**ModelsGroupPriority**](ModelsGroupPriority.md) |  | [optional] [default to undefined]
 **shiftGroupId** | **number** |  | [optional] [default to undefined]
 **updatedAt** | **string** |  | [optional] [default to undefined]
 **userId** | **number** |  | [optional] [default to undefined]

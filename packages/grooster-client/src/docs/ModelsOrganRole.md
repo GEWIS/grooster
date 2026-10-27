@@ -1,4 +1,4 @@
-# GEWISRoosterInternalModelsOrganRole
+# ModelsOrganRole
 
 
 ## Enum

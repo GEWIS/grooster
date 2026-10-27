@@ -4,8 +4,8 @@ All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**createRosterAnswer**](#createrosteranswer) | **POST** /roster/answer | Create a new roster shift answer|
-|[**updateRosterAnswer**](#updaterosteranswer) | **PATCH** /roster/answer/{id} | Updates a roster answer with the new value|
+|[**createRosterAnswer**](#createrosteranswer) | **POST** /rosters/{rosterId}/answers | Create a new roster shift answer|
+|[**updateRosterAnswer**](#updaterosteranswer) | **PATCH** /rosters/{rosterId}/answers/{answerId} | Updates a roster answer with the new value|
 
 # **createRosterAnswer**
 > RosterAnswer createRosterAnswer(createParams)
@@ -23,9 +23,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterAnswerApi(configuration);
 
+let rosterId: number; //Roster ID (default to undefined)
 let createParams: AnswerCreateRequest; //Roster answer input
 
 const { status, data } = await apiInstance.createRosterAnswer(
+    rosterId,
     createParams
 );
 ```
@@ -35,6 +37,7 @@ const { status, data } = await apiInstance.createRosterAnswer(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **createParams** | **AnswerCreateRequest**| Roster answer input | |
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -75,11 +78,13 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterAnswerApi(configuration);
 
-let id: number; //Roster Answer ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
+let answerId: number; //Roster Answer ID (default to undefined)
 let updateParams: AnswerUpdateRequest; //New answer value
 
 const { status, data } = await apiInstance.updateRosterAnswer(
-    id,
+    rosterId,
+    answerId,
     updateParams
 );
 ```
@@ -89,7 +94,8 @@ const { status, data } = await apiInstance.updateRosterAnswer(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **updateParams** | **AnswerUpdateRequest**| New answer value | |
-| **id** | [**number**] | Roster Answer ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
+| **answerId** | [**number**] | Roster Answer ID | defaults to undefined|
 
 
 ### Return type

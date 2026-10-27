@@ -6,7 +6,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **comment** | **string** |  | [default to undefined]
-**rosterId** | **number** |  | [optional] [default to undefined]
 **userId** | **number** |  | [optional] [default to undefined]
 
 ## Example
@@ -16,7 +15,6 @@ import { CommentCreateRequest } from './api';
 
 const instance: CommentCreateRequest = {
     comment,
-    rosterId,
     userId,
 };
 ```

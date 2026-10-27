@@ -4,8 +4,8 @@ All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**createRosterComment**](#createrostercomment) | **POST** /roster/comment | Create a new roster comment|
-|[**getRosterComments**](#getrostercomments) | **GET** /roster/comment | Get all comments for a roster|
+|[**createRosterComment**](#createrostercomment) | **POST** /rosters/{rosterId}/comments | Create a new roster comment|
+|[**getRosterComments**](#getrostercomments) | **GET** /rosters/{rosterId}/comments | Get all comments for a roster|
 
 # **createRosterComment**
 > RosterComment createRosterComment(createParams)
@@ -23,9 +23,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterCommentApi(configuration);
 
+let rosterId: number; //Roster ID (default to undefined)
 let createParams: CommentCreateRequest; //Roster comment input
 
 const { status, data } = await apiInstance.createRosterComment(
+    rosterId,
     createParams
 );
 ```
@@ -35,6 +37,7 @@ const { status, data } = await apiInstance.createRosterComment(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **createParams** | **CommentCreateRequest**| Roster comment input | |
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type

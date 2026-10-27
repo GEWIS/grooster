@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**role** | [**GEWISRoosterInternalModelsOrganRole**](GEWISRoosterInternalModelsOrganRole.md) |  | [default to undefined]
+**role** | [**ModelsOrganRole**](ModelsOrganRole.md) |  | [default to undefined]
 
 ## Example
 

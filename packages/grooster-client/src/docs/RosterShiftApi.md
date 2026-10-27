@@ -4,9 +4,9 @@ All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**createRosterShift**](#createrostershift) | **POST** /roster/shift | Create a new roster shift|
-|[**deleteRosterShift**](#deleterostershift) | **DELETE** /roster/shift/{id} | Deletes a roster shift|
-|[**updateRosterShift**](#updaterostershift) | **PATCH** /roster/shift/{id} | Update a roster shift|
+|[**createRosterShift**](#createrostershift) | **POST** /rosters/{rosterId}/shifts | Create a new roster shift|
+|[**deleteRosterShift**](#deleterostershift) | **DELETE** /rosters/{rosterId}/shifts/{shiftId} | Deletes a roster shift|
+|[**updateRosterShift**](#updaterostershift) | **PATCH** /rosters/{rosterId}/shifts/{shiftId} | Update a roster shift|
 
 # **createRosterShift**
 > RosterShift createRosterShift(createParams)
@@ -24,9 +24,11 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterShiftApi(configuration);
 
+let rosterId: number; //Roster ID (default to undefined)
 let createParams: ShiftCreateRequest; //Roster shift input
 
 const { status, data } = await apiInstance.createRosterShift(
+    rosterId,
     createParams
 );
 ```
@@ -36,6 +38,7 @@ const { status, data } = await apiInstance.createRosterShift(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **createParams** | **ShiftCreateRequest**| Roster shift input | |
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -75,10 +78,12 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterShiftApi(configuration);
 
-let id: number; //Roster Answer ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
+let shiftId: number; //Roster Shift ID (default to undefined)
 
 const { status, data } = await apiInstance.deleteRosterShift(
-    id
+    rosterId,
+    shiftId
 );
 ```
 
@@ -86,7 +91,8 @@ const { status, data } = await apiInstance.deleteRosterShift(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster Answer ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
+| **shiftId** | [**number**] | Roster Shift ID | defaults to undefined|
 
 
 ### Return type
@@ -127,11 +133,13 @@ import {
 const configuration = new Configuration();
 const apiInstance = new RosterShiftApi(configuration);
 
-let id: number; //Roster Shift ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
+let shiftId: number; //Roster Shift ID (default to undefined)
 let updateParams: ShiftUpdateRequest; //Update input
 
 const { status, data } = await apiInstance.updateRosterShift(
-    id,
+    rosterId,
+    shiftId,
     updateParams
 );
 ```
@@ -141,7 +149,8 @@ const { status, data } = await apiInstance.updateRosterShift(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **updateParams** | **ShiftUpdateRequest**| Update input | |
-| **id** | [**number**] | Roster Shift ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
+| **shiftId** | [**number**] | Roster Shift ID | defaults to undefined|
 
 
 ### Return type
