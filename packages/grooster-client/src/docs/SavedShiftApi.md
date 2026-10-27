@@ -4,12 +4,12 @@ All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**getSavedRoster**](#getsavedroster) | **GET** /roster/saved-shift/{id} | Get all saved shifts for a specific roster|
-|[**rosterSave**](#rostersave) | **POST** /roster/{id}/save | Save a specific roster|
-|[**updateSavedShift**](#updatesavedshift) | **PATCH** /roster/saved-shift/{id} | Update a specific saved shift|
+|[**getSavedShifts**](#getsavedshifts) | **GET** /rosters/{rosterId}/saved-shifts | Get all saved shifts for a specific roster|
+|[**lockRoster**](#lockroster) | **POST** /rosters/{rosterId}/lock | Lock a specific roster, storing its current assignments as saved shifts|
+|[**updateSavedShift**](#updatesavedshift) | **PATCH** /rosters/{rosterId}/saved-shifts/{savedShiftId} | Update a specific saved shift|
 
-# **getSavedRoster**
-> SavedShiftResponse getSavedRoster()
+# **getSavedShifts**
+> SavedShiftResponse getSavedShifts()
 
 
 ### Example
@@ -23,10 +23,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new SavedShiftApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 
-const { status, data } = await apiInstance.getSavedRoster(
-    id
+const { status, data } = await apiInstance.getSavedShifts(
+    rosterId
 );
 ```
 
@@ -34,7 +34,7 @@ const { status, data } = await apiInstance.getSavedRoster(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -60,8 +60,8 @@ const { status, data } = await apiInstance.getSavedRoster(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **rosterSave**
-> string rosterSave()
+# **lockRoster**
+> string lockRoster()
 
 
 ### Example
@@ -75,10 +75,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new SavedShiftApi(configuration);
 
-let id: number; //Roster ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
 
-const { status, data } = await apiInstance.rosterSave(
-    id
+const { status, data } = await apiInstance.lockRoster(
+    rosterId
 );
 ```
 
@@ -86,7 +86,7 @@ const { status, data } = await apiInstance.rosterSave(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] | Roster ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
 
 
 ### Return type
@@ -128,11 +128,13 @@ import {
 const configuration = new Configuration();
 const apiInstance = new SavedShiftApi(configuration);
 
-let id: number; //SavedShift ID (default to undefined)
+let rosterId: number; //Roster ID (default to undefined)
+let savedShiftId: number; //SavedShift ID (default to undefined)
 let updateParams: SavedShiftUpdateRequest; //Update data
 
 const { status, data } = await apiInstance.updateSavedShift(
-    id,
+    rosterId,
+    savedShiftId,
     updateParams
 );
 ```
@@ -142,7 +144,8 @@ const { status, data } = await apiInstance.updateSavedShift(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **updateParams** | **SavedShiftUpdateRequest**| Update data | |
-| **id** | [**number**] | SavedShift ID | defaults to undefined|
+| **rosterId** | [**number**] | Roster ID | defaults to undefined|
+| **savedShiftId** | [**number**] | SavedShift ID | defaults to undefined|
 
 
 ### Return type

@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**priority** | [**GEWISRoosterInternalModelsGroupPriority**](GEWISRoosterInternalModelsGroupPriority.md) |  | [default to undefined]
+**priority** | [**ModelsGroupPriority**](ModelsGroupPriority.md) |  | [default to undefined]
 **userId** | **number** |  | [default to undefined]
 
 ## Example

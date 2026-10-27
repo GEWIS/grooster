@@ -6,7 +6,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **name** | **string** |  | [optional] [default to undefined]
-**rosterId** | **number** |  | [optional] [default to undefined]
 
 ## Example
 
@@ -15,7 +14,6 @@ import { ShiftCreateRequest } from './api';
 
 const instance: ShiftCreateRequest = {
     name,
-    rosterId,
 };
 ```
 

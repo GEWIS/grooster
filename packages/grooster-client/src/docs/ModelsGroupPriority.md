@@ -1,4 +1,4 @@
-# GEWISRoosterInternalModelsGroupPriority
+# ModelsGroupPriority
 
 
 ## Enum

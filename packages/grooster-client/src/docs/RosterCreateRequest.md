@@ -7,7 +7,6 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **date** | **string** |  | [optional] [default to undefined]
 **name** | **string** |  | [optional] [default to undefined]
-**organId** | **number** |  | [optional] [default to undefined]
 **shifts** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 **templateId** | **number** |  | [optional] [default to undefined]
 
@@ -19,7 +18,6 @@ import { RosterCreateRequest } from './api';
 const instance: RosterCreateRequest = {
     date,
     name,
-    organId,
     shifts,
     templateId,
 };

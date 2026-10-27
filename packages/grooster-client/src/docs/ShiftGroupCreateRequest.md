@@ -6,7 +6,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **name** | **string** |  | [default to undefined]
-**organId** | **number** |  | [default to undefined]
 
 ## Example
 
@@ -15,7 +14,6 @@ import { ShiftGroupCreateRequest } from './api';
 
 const instance: ShiftGroupCreateRequest = {
     name,
-    organId,
 };
 ```
 

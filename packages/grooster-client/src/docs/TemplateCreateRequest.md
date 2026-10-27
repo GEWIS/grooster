@@ -6,7 +6,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **name** | **string** |  | [optional] [default to undefined]
-**organId** | **number** |  | [optional] [default to undefined]
 **shifts** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 
 ## Example
@@ -16,7 +15,6 @@ import { TemplateCreateRequest } from './api';
 
 const instance: TemplateCreateRequest = {
     name,
-    organId,
     shifts,
 };
 ```
