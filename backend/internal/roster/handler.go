@@ -362,7 +362,6 @@ func (h *Handler) UpdateShiftGroupPriority(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	log.Print(groupPriority)
 	c.JSON(http.StatusOK, groupPriority)
 }
 

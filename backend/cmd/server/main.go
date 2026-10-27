@@ -58,7 +58,13 @@ func main() {
 
 	logger.Info("Connecting to database")
 
-	r := gin.Default()
+	// Use gin.New instead of gin.Default to skip gin's plain-text request
+	// logger; requests are logged by our structured logging middleware.
+	if os.Getenv(gin.EnvGinMode) == "" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	r := gin.New()
+	r.Use(gin.Recovery())
 
 	rawOrigins := os.Getenv("ALLOWED_ORIGINS")
 	var origins []string
