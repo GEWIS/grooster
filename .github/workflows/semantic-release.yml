@@ -32,14 +32,3 @@ jobs:
     secrets:
       REGISTRY_USERNAME: ${{ secrets.SVC_GH_ABCEOU_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.SVC_GH_ABCEOU_PWD }}
-
-  release-client:
-    uses: GEWIS/actions/.github/workflows/npm-release.yml@v1
-    needs: versioning
-    if: ${{ needs.versioning.outputs.next-version != '' }}
-    with:
-      node-version: '22.23.4'
-      version: ${{ needs.versioning.outputs.next-version }}
-      working-directory: './packages/grooster-client'
-    secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

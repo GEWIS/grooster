@@ -19,7 +19,7 @@
     "dependencies": {
         "@fontsource-variable/bricolage-grotesque": "^5.3.0",
         "@fontsource/fira-mono": "^5.3.0",
-        "@gewis/grooster-backend-ts": "^1.21.0",
+        "@gewis/grooster-backend-ts": "file:../packages/grooster-client",
         "@openvue/forms": "1.0.0",
         "@openvue/openicons": "^1.0.0",
         "@openvue/openicons-vue": "^1.0.0",
