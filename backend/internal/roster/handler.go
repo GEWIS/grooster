@@ -3,13 +3,12 @@ package roster
 import (
 	"GEWIS-Rooster/internal/models"
 	_ "GEWIS-Rooster/internal/models"
+	"GEWIS-Rooster/internal/platform/httputil"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"net/http"
-	"strconv"
 )
 
 type Handler struct {
@@ -18,30 +17,36 @@ type Handler struct {
 
 func NewRosterHandler(rosterService Service, rg *gin.RouterGroup, db *gorm.DB) *Handler {
 	h := &Handler{rosterService: rosterService}
-	g := rg.Group("/roster")
 
-	h.registerRosterRoutes(g, db)
-	h.registerShiftRoutes(g, db)
-	h.registerTemplateRoutes(g, db)
-	h.registerCommentRoutes(g, db)
+	// Gin requires wildcards at the same position to share a name, so every
+	// route below these prefixes must use the same parameter names.
+	organ := rg.Group("/organs/:organId")
+	roster := rg.Group("/rosters/:rosterId")
+	template := rg.Group("/templates/:templateId")
+	shiftGroup := rg.Group("/shift-groups/:shiftGroupId")
 
-	g.GET("/:id/responsibles", requireRosterOrganRoleParam(db, "id", models.RoleMember), h.GetRosterResponsibles)
-	g.POST("/:id/responsibles", requireRosterOrganRoleParam(db, "id", models.RoleAdmin), h.CreateRosterResponsible)
-	g.DELETE("/:id/responsibles/:userId", requireRosterOrganRoleParam(db, "id", models.RoleAdmin), h.DeleteRosterResponsible)
+	h.registerRosterRoutes(organ, roster, db)
+	h.registerShiftRoutes(roster, db)
+	h.registerTemplateRoutes(organ, template, db)
+	h.registerCommentRoutes(roster, db)
 
-	g.POST("/:id/fill", requireRosterOrganRoleParam(db, "id", models.RoleAdmin), h.FillRosterPreferences)
+	roster.GET("/responsibles", RequireRosterOrganRoleParam(db, "rosterId", models.RoleMember), h.GetRosterResponsibles)
+	roster.POST("/responsibles", RequireRosterOrganRoleParam(db, "rosterId", models.RoleAdmin), h.CreateRosterResponsible)
+	roster.DELETE("/responsibles/:userId", RequireRosterOrganRoleParam(db, "rosterId", models.RoleAdmin), h.DeleteRosterResponsible)
 
-	g.POST("/:id/save", requireRosterOrganRoleParam(db, "id", models.RoleAdmin), h.SaveRoster)
-	g.PATCH("/saved-shift/:id", h.UpdateSavedShift)
-	g.GET("/saved-shift/:id", h.GetSavedRoster)
+	roster.POST("/fill", RequireRosterOrganRoleParam(db, "rosterId", models.RoleAdmin), h.FillRosterPreferences)
 
-	g.POST("/shift-groups", requireRosterOrganRoleBody(db, models.RoleAdmin), h.CreateShiftGroup)
-	g.GET("/shift-groups", h.GetShiftGroups)
-	g.GET("/shift-groups/:id", h.GetShiftGroup)
+	roster.POST("/lock", RequireRosterOrganRoleParam(db, "rosterId", models.RoleAdmin), h.LockRoster)
+	roster.GET("/saved-shifts", h.GetSavedShifts)
+	roster.PATCH("/saved-shifts/:savedShiftId", requireBelongsTo(db, &models.SavedShift{}, "savedShiftId", "roster_id", "rosterId"), h.UpdateSavedShift)
 
-	g.GET("/shift-groups/:id/priority", requireShiftGroupOrganRoleParams(db, models.RoleAdmin), h.GetShiftGroupPriorities)
-	g.PUT("/shift-groups/:id/priority", requireShiftGroupOrganRoleParams(db, models.RoleAdmin), h.UpdateShiftGroupPriority)
-	g.POST("/shift-groups/:id/push-to-bottom", requireShiftGroupOrganRoleParams(db, models.RoleAdmin), h.PushUserToBottom)
+	organ.POST("/shift-groups", requireOrganRoleParam(db, "organId", models.RoleAdmin), h.CreateShiftGroup)
+	organ.GET("/shift-groups", h.GetShiftGroups)
+	shiftGroup.GET("", h.GetShiftGroup)
+
+	shiftGroup.GET("/priorities", requireShiftGroupOrganRoleParam(db, "shiftGroupId", models.RoleAdmin), h.GetShiftGroupPriorities)
+	shiftGroup.PUT("/priorities", requireShiftGroupOrganRoleParam(db, "shiftGroupId", models.RoleAdmin), h.UpdateShiftGroupPriority)
+	shiftGroup.POST("/push-to-bottom", requireShiftGroupOrganRoleParam(db, "shiftGroupId", models.RoleAdmin), h.PushUserToBottom)
 
 	return h
 }
@@ -53,20 +58,19 @@ func NewRosterHandler(rosterService Service, rg *gin.RouterGroup, db *gorm.DB) *
 //	@Tags		Roster
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path		int	true	"Roster ID"
+//	@Param		rosterId	path		int	true	"Roster ID"
 //	@Success	200	{array}	models.RosterAnswer
 //	@Failure	400	{string}	string
 //	@Failure 404 {string} string
 //	@ID			fillRoster
-//	@Router		/roster/{id}/fill [post]
+//	@Router		/rosters/{rosterId}/fill [post]
 func (h *Handler) FillRosterPreferences(c *gin.Context) {
-	rosterID, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster ID"})
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
 		return
 	}
 
-	answers, err := h.rosterService.FillRosterPreferences(uint(rosterID))
+	answers, err := h.rosterService.FillRosterPreferences(rosterID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
@@ -74,28 +78,26 @@ func (h *Handler) FillRosterPreferences(c *gin.Context) {
 	c.JSON(http.StatusOK, answers)
 }
 
-// SaveRoster
+// LockRoster
 //
-//	@Summary	Save a specific roster
+//	@Summary	Lock a specific roster, storing its current assignments as saved shifts
 //	@Security	BearerAuth
 //	@Tags		Saved Shift
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path		int	true	"Roster ID"
+//	@Param		rosterId	path		int	true	"Roster ID"
 //	@Success	200	{string}	json
 //	@Failure	400	{string}	json
 //	@Failure	404	{string}	json
-//	@ID			rosterSave
-//	@Router		/roster/{id}/save [post]
-func (h *Handler) SaveRoster(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster ID"})
+//	@ID			lockRoster
+//	@Router		/rosters/{rosterId}/lock [post]
+func (h *Handler) LockRoster(c *gin.Context) {
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
 		return
 	}
 
-	err = h.rosterService.SaveRoster(uint(id))
+	err := h.rosterService.SaveRoster(rosterID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "SavedShift not found"})
@@ -115,18 +117,17 @@ func (h *Handler) SaveRoster(c *gin.Context) {
 //	@Tags		Saved Shift
 //	@Accept		json
 //	@Produce	json
-//	@Param		id				path		int								true	"SavedShift ID"
+//	@Param		rosterId		path		int								true	"Roster ID"
+//	@Param		savedShiftId	path		int								true	"SavedShift ID"
 //	@Param		updateParams	body		SavedShiftUpdateRequest	true	"Update data"
 //	@Success	200				{object}	models.SavedShift
 //	@Failure	400				{string}	string	"Invalid request"
 //	@Failure	404				{string}	string	"SavedShift not found"
 //	@ID			updateSavedShift
-//	@Router		/roster/saved-shift/{id} [patch]
+//	@Router		/rosters/{rosterId}/saved-shifts/{savedShiftId} [patch]
 func (h *Handler) UpdateSavedShift(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid saved shift ID"})
+	id, ok := httputil.MustPathUint(c, "savedShiftId")
+	if !ok {
 		return
 	}
 
@@ -136,7 +137,7 @@ func (h *Handler) UpdateSavedShift(c *gin.Context) {
 		return
 	}
 
-	updatedShift, err := h.rosterService.UpdateSavedShift(uint(id), &updateParams)
+	updatedShift, err := h.rosterService.UpdateSavedShift(id, &updateParams)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "SavedShift not found"})
@@ -149,28 +150,26 @@ func (h *Handler) UpdateSavedShift(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedShift)
 }
 
-// GetSavedRoster
+// GetSavedShifts
 //
 //	@Summary	Get all saved shifts for a specific roster
 //	@Security	BearerAuth
 //	@Tags		Saved Shift
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path		int					true	"Roster ID"
+//	@Param		rosterId	path		int					true	"Roster ID"
 //	@Success	200	{object}		SavedShiftResponse	"Saved Shift Response"
 //	@Failure	400	{string}	string				"Invalid request"
 //	@Failure	404	{string}	string				"SavedShift not found"
-//	@ID			getSavedRoster
-//	@Router		/roster/saved-shift/{id} [get]
-func (h *Handler) GetSavedRoster(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster ID"})
+//	@ID			getSavedShifts
+//	@Router		/rosters/{rosterId}/saved-shifts [get]
+func (h *Handler) GetSavedShifts(c *gin.Context) {
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
 		return
 	}
 
-	savedShifts, savedShiftOrdering, err := h.rosterService.GetSavedRoster(uint(id))
+	savedShifts, savedShiftOrdering, err := h.rosterService.GetSavedRoster(rosterID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -193,17 +192,15 @@ func (h *Handler) GetSavedRoster(c *gin.Context) {
 //	@Tags		ShiftGroup
 //	@Accept		json
 //	@Produce	json
-//	@Param		id		path		int					true	"Shift Group ID"
+//	@Param		shiftGroupId	path		int					true	"Shift Group ID"
 //	@Param		params	body		PushToBottomRequest	true	"User to push to the bottom"
 //	@Success	200	{string}	string
 //	@Failure	400	{string}	string				"Invalid request"
 //	@ID			pushUserToBottom
-//	@Router		/roster/shift-groups/{id}/push-to-bottom [post]
+//	@Router		/shift-groups/{shiftGroupId}/push-to-bottom [post]
 func (h *Handler) PushUserToBottom(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid shift group ID"})
+	id, ok := httputil.MustPathUint(c, "shiftGroupId")
+	if !ok {
 		return
 	}
 
@@ -213,7 +210,7 @@ func (h *Handler) PushUserToBottom(c *gin.Context) {
 		return
 	}
 
-	if err := h.rosterService.PushUserToBottom(uint(id), params.UserID); err != nil {
+	if err := h.rosterService.PushUserToBottom(id, params.UserID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -228,19 +225,25 @@ func (h *Handler) PushUserToBottom(c *gin.Context) {
 //	@Tags      ShiftGroup
 //	@Accept    json
 //	@Produce   json
+//	@Param     organId path     int                      true "Organ ID"
 //	@Param     params body      ShiftGroupCreateRequest  true "Shift Group Details"
 //	@Success   201    {object}   models.ShiftGroup
 //	@Failure   400    {string}   string
 //	@ID        createShiftGroup
-//	@Router    /roster/shift-groups [post]
+//	@Router    /organs/{organId}/shift-groups [post]
 func (h *Handler) CreateShiftGroup(c *gin.Context) {
+	organID, ok := httputil.MustPathUint(c, "organId")
+	if !ok {
+		return
+	}
+
 	var params ShiftGroupCreateRequest
-	if err := c.ShouldBindBodyWith(&params, binding.JSON); err != nil {
+	if err := c.ShouldBindJSON(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	group, err := h.rosterService.CreateShiftGroup(params)
+	group, err := h.rosterService.CreateShiftGroup(organID, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -255,20 +258,18 @@ func (h *Handler) CreateShiftGroup(c *gin.Context) {
 //	@Security  BearerAuth
 //	@Tags      ShiftGroup
 //	@Produce   json
-//	@Param     organ_id query    int  true "Organ ID"
+//	@Param     organId path     int  true "Organ ID"
 //	@Success   200      {array}   models.ShiftGroup
 //	@Failure   400      {string}  string
 //	@ID        getShiftGroups
-//	@Router    /roster/shift-groups [get]
+//	@Router    /organs/{organId}/shift-groups [get]
 func (h *Handler) GetShiftGroups(c *gin.Context) {
-	var filters ShiftGroupFilterParams
-
-	if err := c.ShouldBindQuery(&filters); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	organID, ok := httputil.MustPathUint(c, "organId")
+	if !ok {
 		return
 	}
 
-	groups, err := h.rosterService.GetShiftGroups(filters)
+	groups, err := h.rosterService.GetShiftGroups(organID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -283,20 +284,18 @@ func (h *Handler) GetShiftGroups(c *gin.Context) {
 //	@Security  BearerAuth
 //	@Tags      ShiftGroup
 //	@Produce   json
-//	@Param     id path      int  true "Shift Group ID"
+//	@Param     shiftGroupId path      int  true "Shift Group ID"
 //	@Success   200 {object} models.ShiftGroup
 //	@Failure   404 {string}   string
 //	@ID        getShiftGroup
-//	@Router    /roster/shift-groups/{id} [get]
+//	@Router    /shift-groups/{shiftGroupId} [get]
 func (h *Handler) GetShiftGroup(c *gin.Context) {
-	idStr := c.Param("id")
-	id64, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+	id, ok := httputil.MustPathUint(c, "shiftGroupId")
+	if !ok {
 		return
 	}
 
-	group, err := h.rosterService.GetShiftGroup(uint(id64))
+	group, err := h.rosterService.GetShiftGroup(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Shift group not found"})
 		return
@@ -312,20 +311,18 @@ func (h *Handler) GetShiftGroup(c *gin.Context) {
 //	@Tags		ShiftGroup
 //	@Accept		json
 //	@Produce	json
-//	@Param		id				path		int								true	"ShiftGroup ID"
+//	@Param		shiftGroupId	path		int								true	"ShiftGroup ID"
 //	@Success	200				{array}	models.ShiftGroupPriority
 //	@Failure	400				{string}	string	"Invalid request"
 //	@ID			getShiftGroupPriorities
-//	@Router    /roster/shift-groups/{id}/priority [get]
+//	@Router    /shift-groups/{shiftGroupId}/priorities [get]
 func (h *Handler) GetShiftGroupPriorities(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+	id, ok := httputil.MustPathUint(c, "shiftGroupId")
+	if !ok {
 		return
 	}
 
-	shiftPriorities, err := h.rosterService.GetShiftGroupPriorities(uint(id))
+	shiftPriorities, err := h.rosterService.GetShiftGroupPriorities(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -341,18 +338,16 @@ func (h *Handler) GetShiftGroupPriorities(c *gin.Context) {
 //	@Tags		ShiftGroup
 //	@Accept		json
 //	@Produce	json
-//	@Param		id				path		int								true	"ShiftGroup ID"
+//	@Param		shiftGroupId	path		int								true	"ShiftGroup ID"
 //	@Param		updateParams	body		GroupPriorityUpdateParam	true	"Update parameters"
 //	@Success	200				{object}	models.ShiftGroupPriority
 //	@Failure	400				{string}	string	"Invalid request"
 //	@Failure	404				{string}	string	"SavedShift not found"
 //	@ID			updateShiftGroupPriority
-//	@Router    /roster/shift-groups/{id}/priority [put]
+//	@Router    /shift-groups/{shiftGroupId}/priorities [put]
 func (h *Handler) UpdateShiftGroupPriority(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+	id, ok := httputil.MustPathUint(c, "shiftGroupId")
+	if !ok {
 		return
 	}
 
@@ -362,7 +357,7 @@ func (h *Handler) UpdateShiftGroupPriority(c *gin.Context) {
 		return
 	}
 
-	groupPriority, err := h.rosterService.UpdateShiftGroupPriority(uint(id), params)
+	groupPriority, err := h.rosterService.UpdateShiftGroupPriority(id, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -379,21 +374,20 @@ func (h *Handler) UpdateShiftGroupPriority(c *gin.Context) {
 //	@Tags		Roster
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path		int	true	"Roster ID"
+//	@Param		rosterId	path		int	true	"Roster ID"
 //	@Success	200	{array}		models.RosterResponsible
 //	@Failure	400	{string}	string	"Invalid roster ID"
 //	@Failure	403	{string}	string	"Insufficient organ permissions"
 //	@Failure	404	{string}	string	"Roster not found"
 //	@ID			getRosterResponsibles
-//	@Router		/roster/{id}/responsibles [get]
+//	@Router		/rosters/{rosterId}/responsibles [get]
 func (h *Handler) GetRosterResponsibles(c *gin.Context) {
-	rosterID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster ID format"})
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
 		return
 	}
 
-	responsibles, err := h.rosterService.GetRosterResponsibles(uint(rosterID))
+	responsibles, err := h.rosterService.GetRosterResponsibles(rosterID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -410,18 +404,17 @@ func (h *Handler) GetRosterResponsibles(c *gin.Context) {
 //	@Tags		Roster
 //	@Accept		json
 //	@Produce	json
-//	@Param		id		path		int								true	"Roster ID"
+//	@Param		rosterId	path		int								true	"Roster ID"
 //	@Param		params	body		RosterResponsibleCreateRequest	true	"User to assign as responsible"
 //	@Success	201		{object}	models.RosterResponsible
 //	@Failure	400		{string}	string	"Invalid request"
 //	@Failure	403		{string}	string	"Insufficient organ permissions"
 //	@Failure	404		{string}	string	"Roster not found"
 //	@ID			createRosterResponsible
-//	@Router		/roster/{id}/responsibles [post]
+//	@Router		/rosters/{rosterId}/responsibles [post]
 func (h *Handler) CreateRosterResponsible(c *gin.Context) {
-	rosterID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster ID format"})
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
 		return
 	}
 
@@ -431,7 +424,7 @@ func (h *Handler) CreateRosterResponsible(c *gin.Context) {
 		return
 	}
 
-	responsible, err := h.rosterService.CreateRosterResponsible(uint(rosterID), params.UserID)
+	responsible, err := h.rosterService.CreateRosterResponsible(rosterID, params.UserID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -448,28 +441,26 @@ func (h *Handler) CreateRosterResponsible(c *gin.Context) {
 //	@Tags		Roster
 //	@Accept		json
 //	@Produce	json
-//	@Param		id		path		int	true	"Roster ID"
+//	@Param		rosterId	path		int	true	"Roster ID"
 //	@Param		userId	path		int	true	"User ID"
 //	@Success	200		{object}	map[string]string
 //	@Failure	400		{string}	string	"Invalid request"
 //	@Failure	403		{string}	string	"Insufficient organ permissions"
 //	@Failure	404		{string}	string	"Responsible not found"
 //	@ID			deleteRosterResponsible
-//	@Router		/roster/{id}/responsibles/{userId} [delete]
+//	@Router		/rosters/{rosterId}/responsibles/{userId} [delete]
 func (h *Handler) DeleteRosterResponsible(c *gin.Context) {
-	rosterID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster ID format"})
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
 		return
 	}
 
-	userID, err := strconv.ParseUint(c.Param("userId"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+	userID, ok := httputil.MustPathUint(c, "userId")
+	if !ok {
 		return
 	}
 
-	err = h.rosterService.DeleteRosterResponsible(uint(rosterID), uint(userID))
+	err := h.rosterService.DeleteRosterResponsible(rosterID, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Responsible not found"})

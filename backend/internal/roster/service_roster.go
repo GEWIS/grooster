@@ -7,18 +7,18 @@ import (
 )
 
 type RosterManager interface {
-	CreateRoster(*CreateRequest) (*models.Roster, error)
-	GetRosters(*FilterParams) ([]*models.Roster, error)
+	CreateRoster(organID uint, params *CreateRequest) (*models.Roster, error)
+	GetRosters(organID *uint, params *FilterParams) ([]*models.Roster, error)
 	UpdateRoster(uint, *UpdateRequest) (*models.Roster, error)
 	DeleteRoster(ID uint) error
 }
 
-func (s *service) CreateRoster(params *CreateRequest) (*models.Roster, error) {
+func (s *service) CreateRoster(organID uint, params *CreateRequest) (*models.Roster, error) {
 	var users []models.User
 	var values = models.Values{"J", "X", "L", "N", "S", "B"} //TODO Change this to input values
 
 	err := s.db.Joins("JOIN user_organs ON user_organs.user_id = users.id").
-		Where("user_organs.organ_id = ?", params.OrganID).
+		Where("user_organs.organ_id = ?", organID).
 		Find(&users).Error
 
 	if err != nil {
@@ -35,7 +35,7 @@ func (s *service) CreateRoster(params *CreateRequest) (*models.Roster, error) {
 	roster := models.Roster{
 		Name:       params.Name,
 		Date:       params.Date,
-		OrganID:    params.OrganID,
+		OrganID:    organID,
 		Values:     values,
 		TemplateID: params.TemplateID,
 	}
@@ -82,7 +82,9 @@ func (s *service) CreateRoster(params *CreateRequest) (*models.Roster, error) {
 	return &roster, nil
 }
 
-func (s *service) GetRosters(params *FilterParams) ([]*models.Roster, error) {
+// GetRosters returns the rosters matching params. When organID is nil,
+// rosters of all organs are considered.
+func (s *service) GetRosters(organID *uint, params *FilterParams) ([]*models.Roster, error) {
 	db := s.db.Model(&models.Roster{})
 
 	if params.ID != nil {
@@ -97,8 +99,8 @@ func (s *service) GetRosters(params *FilterParams) ([]*models.Roster, error) {
 		}
 	}
 
-	if params.OrganID != nil {
-		db = db.Where("organ_id = ?", *params.OrganID)
+	if organID != nil {
+		db = db.Where("organ_id = ?", *organID)
 	}
 
 	var rosters []*models.Roster

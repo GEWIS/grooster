@@ -2,21 +2,17 @@ package roster
 
 import (
 	"GEWIS-Rooster/internal/models"
+	"GEWIS-Rooster/internal/platform/httputil"
 	"GEWIS-Rooster/internal/platform/middleware"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"gorm.io/gorm"
 	"net/http"
-	"strconv"
 )
 
-func (h *Handler) registerCommentRoutes(g *gin.RouterGroup, db *gorm.DB) {
-	commentGroup := g.Group("/comment")
-	{
-		commentGroup.POST("", requireCommentOrganRoleBody(db, models.RoleMember), h.CreateRosterComment)
-		commentGroup.GET("", requireCommentOrganRoleQuery(db, "rosterId", models.RoleMember), h.GetRosterComments)
-	}
+func (h *Handler) registerCommentRoutes(roster *gin.RouterGroup, db *gorm.DB) {
+	roster.POST("/comments", RequireRosterOrganRoleParam(db, "rosterId", models.RoleMember), h.CreateRosterComment)
+	roster.GET("/comments", RequireRosterOrganRoleParam(db, "rosterId", models.RoleMember), h.GetRosterComments)
 }
 
 // CreateRosterComment
@@ -26,17 +22,22 @@ func (h *Handler) registerCommentRoutes(g *gin.RouterGroup, db *gorm.DB) {
 //	@Tags		Roster Comment
 //	@Accept		json
 //	@Produce	json
+//	@Param		rosterId		path		int						true	"Roster ID"
 //	@Param		createParams	body		CommentCreateRequest	true	"Roster comment input"
 //	@Success	201				{object}	models.RosterComment
 //	@Failure	400				{string}	string
 //	@Failure	403				{string}	string
 //	@Failure	404				{string}	string
 //	@ID			createRosterComment
-//	@Router		/roster/comment [post]
+//	@Router		/rosters/{rosterId}/comments [post]
 func (h *Handler) CreateRosterComment(c *gin.Context) {
-	var param *CommentCreateRequest
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
+		return
+	}
 
-	if err := c.ShouldBindBodyWith(&param, binding.JSON); err != nil {
+	var param *CommentCreateRequest
+	if err := c.ShouldBindJSON(&param); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
@@ -52,7 +53,7 @@ func (h *Handler) CreateRosterComment(c *gin.Context) {
 		return
 	}
 
-	createdComment, err := h.rosterService.CreateRosterComment(param)
+	createdComment, err := h.rosterService.CreateRosterComment(rosterID, param)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Roster not found"})
@@ -72,67 +73,23 @@ func (h *Handler) CreateRosterComment(c *gin.Context) {
 //	@Tags		Roster Comment
 //	@Accept		json
 //	@Produce	json
-//	@Param		rosterId	query		int	true	"Roster ID"
+//	@Param		rosterId	path		int	true	"Roster ID"
 //	@Success	200			{array}		models.RosterComment
 //	@Failure	400			{string}	string
 //	@Failure	404			{string}	string
 //	@ID			getRosterComments
-//	@Router		/roster/comment [get]
+//	@Router		/rosters/{rosterId}/comments [get]
 func (h *Handler) GetRosterComments(c *gin.Context) {
-	rosterID, err := strconv.ParseUint(c.Query("rosterId"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster ID"})
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
 		return
 	}
 
-	comments, err := h.rosterService.GetRosterComments(uint(rosterID))
+	comments, err := h.rosterService.GetRosterComments(rosterID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, comments)
-}
-
-// requireCommentOrganRoleBody validates the existence of a roster referenced
-// by rosterId in the JSON body and ensures the current user has the required
-// minimum role within that roster's organization.
-func requireCommentOrganRoleBody(db *gorm.DB, minRole models.OrganRole) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var body struct {
-			RosterID uint `json:"rosterId"`
-		}
-		if err := c.ShouldBindBodyWith(&body, binding.JSON); err != nil || body.RosterID == 0 {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Valid rosterId is required in body"})
-			return
-		}
-
-		var roster models.Roster
-		if err := db.First(&roster, "id = ?", body.RosterID).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Roster not found"})
-			return
-		}
-		checkAccess(c, db, roster.OrganID, minRole)
-	}
-}
-
-// requireCommentOrganRoleQuery validates the existence of a roster referenced
-// by the given query parameter and ensures the current user has the required
-// minimum role within that roster's organization.
-func requireCommentOrganRoleQuery(db *gorm.DB, queryStr string, minRole models.OrganRole) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		rosterID := c.Query(queryStr)
-		if rosterID == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": queryStr + " is required"})
-			return
-		}
-
-		var roster models.Roster
-		if err := db.First(&roster, "id = ?", rosterID).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Roster not found"})
-			return
-		}
-
-		checkAccess(c, db, roster.OrganID, minRole)
-	}
 }

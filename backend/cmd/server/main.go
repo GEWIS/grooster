@@ -105,7 +105,7 @@ func main() {
 	{
 		user.NewUserHandler(protectedGroup, userService)
 		roster.NewRosterHandler(rosterService, protectedGroup, db)
-		export.NewExportHandler(exportService, protectedGroup)
+		export.NewExportHandler(exportService, protectedGroup, db)
 		organ.NewOrganHandler(protectedGroup, organService, db)
 	}
 

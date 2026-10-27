@@ -8,13 +8,13 @@ import (
 )
 
 type CommentManager interface {
-	CreateRosterComment(*CommentCreateRequest) (*models.RosterComment, error)
+	CreateRosterComment(rosterID uint, params *CommentCreateRequest) (*models.RosterComment, error)
 	GetRosterComments(rosterID uint) ([]*models.RosterComment, error)
 }
 
-func (s *service) CreateRosterComment(params *CommentCreateRequest) (*models.RosterComment, error) {
+func (s *service) CreateRosterComment(rosterID uint, params *CommentCreateRequest) (*models.RosterComment, error) {
 	var roster *models.Roster
-	if err := s.db.First(&roster, params.RosterID).Error; err != nil {
+	if err := s.db.First(&roster, rosterID).Error; err != nil {
 		return nil, fmt.Errorf("roster not found: %w", err)
 	}
 	var user *models.User

@@ -2,28 +2,29 @@ package roster
 
 import (
 	"GEWIS-Rooster/internal/models"
+	"GEWIS-Rooster/internal/platform/httputil"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"gorm.io/gorm"
 	"net/http"
-	"strconv"
 )
 
-func (h *Handler) registerShiftRoutes(g *gin.RouterGroup, db *gorm.DB) {
-	shiftGroup := g.Group("/shift")
-	{
-		shiftGroup.POST("", requireShiftOrganRoleBody(db, models.RoleAdmin), h.CreateRosterShift)
-		shiftGroup.PATCH("/:id", requireShiftOrganRoleParam(db, "id", models.RoleAdmin), h.UpdateRosterShift)
-		shiftGroup.DELETE("/:id", requireShiftOrganRoleParam(db, "id", models.RoleAdmin), h.DeleteRosterShift)
-	}
+func (h *Handler) registerShiftRoutes(roster *gin.RouterGroup, db *gorm.DB) {
+	roster.POST("/shifts", RequireRosterOrganRoleParam(db, "rosterId", models.RoleAdmin), h.CreateRosterShift)
+	roster.PATCH("/shifts/:shiftId",
+		RequireRosterOrganRoleParam(db, "rosterId", models.RoleAdmin),
+		requireBelongsTo(db, &models.RosterShift{}, "shiftId", "roster_id", "rosterId"),
+		h.UpdateRosterShift)
+	roster.DELETE("/shifts/:shiftId",
+		RequireRosterOrganRoleParam(db, "rosterId", models.RoleAdmin),
+		requireBelongsTo(db, &models.RosterShift{}, "shiftId", "roster_id", "rosterId"),
+		h.DeleteRosterShift)
 
-	answerGroup := g.Group("/answer")
-	{
-		answerGroup.POST("", requireShiftOrganRoleBody(db, models.RoleMember), h.CreateRosterAnswer)
-		answerGroup.PATCH("/:id", requireShiftAnswerOrganRoleParam(db, "id", models.RoleMember), h.UpdateRosterAnswer)
-	}
-
+	roster.POST("/answers", RequireRosterOrganRoleParam(db, "rosterId", models.RoleMember), h.CreateRosterAnswer)
+	roster.PATCH("/answers/:answerId",
+		RequireRosterOrganRoleParam(db, "rosterId", models.RoleMember),
+		requireBelongsTo(db, &models.RosterAnswer{}, "answerId", "roster_id", "rosterId"),
+		h.UpdateRosterAnswer)
 }
 
 // CreateRosterShift
@@ -33,20 +34,25 @@ func (h *Handler) registerShiftRoutes(g *gin.RouterGroup, db *gorm.DB) {
 //	@Tags		Roster Shift
 //	@Accept		json
 //	@Produce	json
+//	@Param		rosterId		path		int					true	"Roster ID"
 //	@Param		createParams	body		ShiftCreateRequest	true	"Roster shift input"
 //	@Success	200				{object}	models.RosterShift
 //	@Failure	400				{string}	string
 //	@ID			createRosterShift
-//	@Router		/roster/shift [post]
+//	@Router		/rosters/{rosterId}/shifts [post]
 func (h *Handler) CreateRosterShift(c *gin.Context) {
-	var param *ShiftCreateRequest
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
+		return
+	}
 
-	if err := c.ShouldBindBodyWith(&param, binding.JSON); err != nil {
+	var param *ShiftCreateRequest
+	if err := c.ShouldBindJSON(&param); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	createdRosterShift, err := h.rosterService.CreateRosterShift(param)
+	createdRosterShift, err := h.rosterService.CreateRosterShift(rosterID, param)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -62,18 +68,17 @@ func (h *Handler) CreateRosterShift(c *gin.Context) {
 //		@Tags      Roster Shift
 //		@Accept    json
 //		@Produce   json
-//		@Param     id             path      int                               true   "Roster Shift ID"
+//		@Param     rosterId       path      int                               true   "Roster ID"
+//		@Param     shiftId        path      int                               true   "Roster Shift ID"
 //		@Param     updateParams   body      ShiftUpdateRequest    true   "Update input"
 //		@Success   200            {object}  models.RosterShift
 //		@Failure   400            {string}  string
 //	 	@Failure 404 {string} string
 //		@ID        updateRosterShift
-//		@Router    /roster/shift/{id} [patch]
+//		@Router    /rosters/{rosterId}/shifts/{shiftId} [patch]
 func (h *Handler) UpdateRosterShift(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid shift ID"})
+	id, ok := httputil.MustPathUint(c, "shiftId")
+	if !ok {
 		return
 	}
 
@@ -83,7 +88,7 @@ func (h *Handler) UpdateRosterShift(c *gin.Context) {
 		return
 	}
 
-	updatedShift, err := h.rosterService.UpdateRosterShift(uint(id), &param)
+	updatedShift, err := h.rosterService.UpdateRosterShift(id, &param)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Roster shift not found"})
@@ -104,19 +109,19 @@ func (h *Handler) UpdateRosterShift(c *gin.Context) {
 //	@Tags		Roster Shift
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path		int	true	"Roster Answer ID"
+//	@Param		rosterId	path		int	true	"Roster ID"
+//	@Param		shiftId		path		int	true	"Roster Shift ID"
 //	@Success	200	{string}	string
 //	@Failure	400	{string}	string
 //	@ID			deleteRosterShift
-//	@Router		/roster/shift/{id} [delete]
+//	@Router		/rosters/{rosterId}/shifts/{shiftId} [delete]
 func (h *Handler) DeleteRosterShift(c *gin.Context) {
-	rosterId, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster ID"})
+	shiftID, ok := httputil.MustPathUint(c, "shiftId")
+	if !ok {
 		return
 	}
 
-	if err := h.rosterService.DeleteRosterShift(uint(rosterId)); err != nil {
+	if err := h.rosterService.DeleteRosterShift(shiftID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -133,20 +138,25 @@ func (h *Handler) DeleteRosterShift(c *gin.Context) {
 //	@Tags		Roster Answer
 //	@Accept		json
 //	@Produce	json
+//	@Param		rosterId		path		int					true	"Roster ID"
 //	@Param		createParams	body		AnswerCreateRequest	true	"Roster answer input"
 //	@Success	200				{object}	models.RosterAnswer
 //	@Failure	400				{string}	string
 //	@ID			createRosterAnswer
-//	@Router		/roster/answer [post]
+//	@Router		/rosters/{rosterId}/answers [post]
 func (h *Handler) CreateRosterAnswer(c *gin.Context) {
-	var param *AnswerCreateRequest
+	rosterID, ok := httputil.MustPathUint(c, "rosterId")
+	if !ok {
+		return
+	}
 
-	if err := c.ShouldBindBodyWith(&param, binding.JSON); err != nil {
+	var param *AnswerCreateRequest
+	if err := c.ShouldBindJSON(&param); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Request " + err.Error()})
 		return
 	}
 
-	createdAnswer, err := h.rosterService.CreateRosterAnswer(param)
+	createdAnswer, err := h.rosterService.CreateRosterAnswer(rosterID, param)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -162,18 +172,17 @@ func (h *Handler) CreateRosterAnswer(c *gin.Context) {
 //	@Tags		Roster Answer
 //	@Accept		json
 //	@Produce	json
-//	@Param		id				path		int									true	"Roster Answer ID"
+//	@Param		rosterId		path		int									true	"Roster ID"
+//	@Param		answerId		path		int									true	"Roster Answer ID"
 //	@Param		updateParams	body		AnswerUpdateRequest	true	"New answer value"
 //	@Success	200				{object}	models.RosterAnswer
 //	@Failure	400				{string}	json
 //	@Failure	404				{string}	json
 //	@ID			updateRosterAnswer
-//	@Router		/roster/answer/{id} [patch]
+//	@Router		/rosters/{rosterId}/answers/{answerId} [patch]
 func (h *Handler) UpdateRosterAnswer(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid roster answer ID"})
+	id, ok := httputil.MustPathUint(c, "answerId")
+	if !ok {
 		return
 	}
 
@@ -183,72 +192,11 @@ func (h *Handler) UpdateRosterAnswer(c *gin.Context) {
 		return
 	}
 
-	updatedAnswer, err := h.rosterService.UpdateRosterAnswer(uint(id), &updateParams)
+	updatedAnswer, err := h.rosterService.UpdateRosterAnswer(id, &updateParams)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, updatedAnswer)
-}
-
-// requireRosterOrganRoleParam validates the existence of a roster by its ID
-// from the URL parameters and ensures the current user has the required
-// minimum role within that roster's organization.
-func requireShiftOrganRoleParam(db *gorm.DB, paramStr string, minRole models.OrganRole) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		shiftID := c.Param(paramStr)
-		if shiftID == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": paramStr + " is required"})
-			return
-		}
-
-		var shift models.RosterShift
-		if err := db.Preload("Roster").First(&shift, "id = ?", shiftID).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Roster not found"})
-			return
-		}
-
-		checkAccess(c, db, shift.Roster.OrganID, minRole)
-	}
-}
-
-// requireShiftAnswerOrganRoleParam validates the existence of a roster by its ID
-// from the URL parameters and ensures the current user has the required
-// minimum role within that roster's organization.
-func requireShiftAnswerOrganRoleParam(db *gorm.DB, paramStr string, minRole models.OrganRole) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		answerID := c.Param(paramStr)
-		if answerID == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": paramStr + " is required"})
-			return
-		}
-
-		var answer models.RosterAnswer
-		if err := db.Preload("Roster").First(&answer, "id = ?", answerID).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Answer not found"})
-			return
-		}
-
-		checkAccess(c, db, answer.Roster.OrganID, minRole)
-	}
-}
-
-func requireShiftOrganRoleBody(db *gorm.DB, minRole models.OrganRole) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var body struct {
-			RosterID uint `json:"rosterID"`
-		}
-		if err := c.ShouldBindBodyWith(&body, binding.JSON); err != nil || body.RosterID == 0 {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Valid rosterID is required in body"})
-			return
-		}
-
-		var roster models.Roster
-		if err := db.First(&roster, "id = ?", body.RosterID).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Roster not found"})
-			return
-		}
-		checkAccess(c, db, roster.OrganID, minRole)
-	}
 }

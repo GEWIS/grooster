@@ -2,9 +2,9 @@ package user
 
 import (
 	_ "GEWIS-Rooster/internal/models"
+	"GEWIS-Rooster/internal/platform/httputil"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 )
 
 type Handler struct {
@@ -14,12 +14,12 @@ type Handler struct {
 func NewUserHandler(rg *gin.RouterGroup, userService Service) *Handler {
 	h := &Handler{userService: userService}
 
-	g := rg.Group("/user")
+	g := rg.Group("/users")
 
-	g.POST("/create", h.Create)
-	g.GET("/", h.GetAllUsers)
-	g.GET("/:id", h.GetUserByID)
-	g.DELETE("/:id", h.Delete)
+	g.POST("", h.Create)
+	g.GET("", h.GetAllUsers)
+	g.GET("/:userId", h.GetUserByID)
+	g.DELETE("/:userId", h.Delete)
 
 	return h
 }
@@ -35,7 +35,8 @@ func NewUserHandler(rg *gin.RouterGroup, userService Service) *Handler {
 //	@Param			createParams	body		UserCreateRequest	true	"User input"
 //	@Success		200				{object}	models.User
 //	@Failure		400				{string}	string
-//	@Router			/user/create [post]
+//	@ID				createUser
+//	@Router			/users [post]
 func (h *Handler) Create(c *gin.Context) {
 	var param *CreateRequest
 
@@ -67,7 +68,8 @@ func (h *Handler) Create(c *gin.Context) {
 //	 @Param        gewisId    query     uint    false  "GEWIS ID"
 //		@Success      200         {array}   models.User
 //		@Failure      400         {object}  map[string]string
-//		@Router       /user/ [get]
+//		@ID           getUsers
+//		@Router       /users [get]
 func (h *Handler) GetAllUsers(c *gin.Context) {
 	f := FilterParams{}
 	if err := c.ShouldBindQuery(&f); err != nil {
@@ -92,22 +94,19 @@ func (h *Handler) GetAllUsers(c *gin.Context) {
 //	@Tags         User
 //	@Accept       json
 //	@Produce      json
-//	@Param        id          path      uint    true   "User ID"
+//	@Param        userId      path      uint    true   "User ID"
 //	@Success      200         {object}  models.User
 //	@Failure      400         {object}  map[string]string
 //	@Failure      404         {object}  map[string]string
-//	@Router       /user/{id} [get]
+//	@ID           getUser
+//	@Router       /users/{userId} [get]
 func (h *Handler) GetUserByID(c *gin.Context) {
-	idParam := c.Param("id")
-
-	id, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid User ID"})
+	id, ok := httputil.MustPathUint(c, "userId")
+	if !ok {
 		return
 	}
 
-	idUint := uint(id)
-	filters := &FilterParams{ID: &idUint}
+	filters := &FilterParams{ID: &id}
 
 	users, err := h.userService.Get(filters)
 	if err != nil {
@@ -125,19 +124,19 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 //	@Tags		User
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path		int	true	"User ID"
+//	@Param		userId	path		int	true	"User ID"
 //	@Success	200	{string}	string
 //	@Failure	400	{string}	string
 //	@Failure	404	{string}	string
-//	@Router		/user/{id} [delete]
+//	@ID			deleteUser
+//	@Router		/users/{userId} [delete]
 func (h *Handler) Delete(c *gin.Context) {
-	userId, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	userID, ok := httputil.MustPathUint(c, "userId")
+	if !ok {
 		return
 	}
 
-	if err := h.userService.Delete(uint(userId)); err != nil {
+	if err := h.userService.Delete(userID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
