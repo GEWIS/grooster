@@ -29,6 +29,8 @@ jobs:
       version: ${{ needs.versioning.outputs.next-version }}
       github-registry: 'true'
       docker-paths: "['eou/grooster-frontend']"
+      # The frontend Dockerfile needs the local generated client, which is outside its context
+      build-contexts: 'grooster-client=packages/grooster-client'
     secrets:
       REGISTRY_USERNAME: ${{ secrets.SVC_GH_ABCEOU_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.SVC_GH_ABCEOU_PWD }}
