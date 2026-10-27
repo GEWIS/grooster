@@ -7,23 +7,23 @@ import (
 )
 
 type ShiftManager interface {
-	CreateRosterShift(*ShiftCreateRequest) (*models.RosterShift, error)
+	CreateRosterShift(rosterID uint, params *ShiftCreateRequest) (*models.RosterShift, error)
 	UpdateRosterShift(uint, *ShiftUpdateRequest) (*models.RosterShift, error)
 	DeleteRosterShift(ID uint) error
 
-	CreateRosterAnswer(*AnswerCreateRequest) (*models.RosterAnswer, error)
+	CreateRosterAnswer(rosterID uint, params *AnswerCreateRequest) (*models.RosterAnswer, error)
 	UpdateRosterAnswer(uint, *AnswerUpdateRequest) (*models.RosterAnswer, error)
 }
 
-func (s *service) CreateRosterShift(createParams *ShiftCreateRequest) (*models.RosterShift, error) {
+func (s *service) CreateRosterShift(rosterID uint, createParams *ShiftCreateRequest) (*models.RosterShift, error) {
 	var roster *models.Roster
-	if err := s.db.First(&roster, createParams.RosterID).Error; err != nil {
+	if err := s.db.First(&roster, rosterID).Error; err != nil {
 		return nil, fmt.Errorf("roster not found: %w", err)
 	}
 
 	var maxOrdering int
 	err := s.db.Model(&models.RosterShift{}).
-		Where("roster_id = ?", createParams.RosterID).
+		Where("roster_id = ?", rosterID).
 		Select("COALESCE(MAX(`order`), -1)").
 		Row().Scan(&maxOrdering)
 
@@ -33,7 +33,7 @@ func (s *service) CreateRosterShift(createParams *ShiftCreateRequest) (*models.R
 
 	rosterShift := models.RosterShift{
 		Name:     createParams.Name,
-		RosterID: createParams.RosterID,
+		RosterID: rosterID,
 		Order:    uint(maxOrdering + 1),
 	}
 
@@ -78,15 +78,19 @@ func (s *service) DeleteRosterShift(ID uint) error {
 	return nil
 }
 
-func (s *service) CreateRosterAnswer(params *AnswerCreateRequest) (*models.RosterAnswer, error) {
+func (s *service) CreateRosterAnswer(rosterID uint, params *AnswerCreateRequest) (*models.RosterAnswer, error) {
 	var roster *models.Roster
-	if err := s.db.First(&roster, params.RosterID).Error; err != nil {
+	if err := s.db.First(&roster, rosterID).Error; err != nil {
 		return nil, fmt.Errorf("roster not found: %w", err)
 	}
 
 	var rosterShift *models.RosterShift
 	if err := s.db.First(&rosterShift, params.RosterShiftID).Error; err != nil {
 		return nil, fmt.Errorf("roster shift not found: %w", err)
+	}
+
+	if rosterShift.RosterID != roster.ID {
+		return nil, fmt.Errorf("roster shift %d does not belong to roster %d", rosterShift.ID, roster.ID)
 	}
 
 	if !slices.Contains(roster.Values, params.Value) {

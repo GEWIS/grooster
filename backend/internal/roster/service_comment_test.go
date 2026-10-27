@@ -27,12 +27,11 @@ func (suite *TestRosterSuite) TestCreateRosterComment_Valid() {
 	suite.db.Create(&answer)
 
 	createParams := &CommentCreateRequest{
-		RosterID: roster.ID,
-		UserID:   1,
-		Comment:  "I can't work this shift",
+		UserID:  1,
+		Comment: "I can't work this shift",
 	}
 
-	comment, err := suite.service.CreateRosterComment(createParams)
+	comment, err := suite.service.CreateRosterComment(roster.ID, createParams)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), comment)
@@ -61,18 +60,16 @@ func (suite *TestRosterSuite) TestCreateRosterComment_UpdatesExisting() {
 		Value:         "yes",
 	})
 
-	first, err := suite.service.CreateRosterComment(&CommentCreateRequest{
-		RosterID: roster.ID,
-		UserID:   1,
-		Comment:  "first comment",
+	first, err := suite.service.CreateRosterComment(roster.ID, &CommentCreateRequest{
+		UserID:  1,
+		Comment: "first comment",
 	})
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), first)
 
-	second, err := suite.service.CreateRosterComment(&CommentCreateRequest{
-		RosterID: roster.ID,
-		UserID:   1,
-		Comment:  "updated comment",
+	second, err := suite.service.CreateRosterComment(roster.ID, &CommentCreateRequest{
+		UserID:  1,
+		Comment: "updated comment",
 	})
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), second)
@@ -97,12 +94,11 @@ func (suite *TestRosterSuite) TestCreateRosterComment_UserNotInOrgan() {
 	suite.db.Create(&roster)
 
 	createParams := &CommentCreateRequest{
-		RosterID: roster.ID,
-		UserID:   1,
-		Comment:  "I can't work this shift",
+		UserID:  1,
+		Comment: "I can't work this shift",
 	}
 
-	comment, err := suite.service.CreateRosterComment(createParams)
+	comment, err := suite.service.CreateRosterComment(roster.ID, createParams)
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), comment)
@@ -111,12 +107,11 @@ func (suite *TestRosterSuite) TestCreateRosterComment_UserNotInOrgan() {
 
 func (suite *TestRosterSuite) TestCreateRosterComment_RosterNotFound() {
 	createParams := &CommentCreateRequest{
-		RosterID: 9999,
-		UserID:   1,
-		Comment:  "I can't work this shift",
+		UserID:  1,
+		Comment: "I can't work this shift",
 	}
 
-	comment, err := suite.service.CreateRosterComment(createParams)
+	comment, err := suite.service.CreateRosterComment(9999, createParams)
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), comment)
@@ -138,9 +133,9 @@ func (suite *TestRosterSuite) TestGetRosterComments_FiltersByRoster() {
 	}
 	suite.db.Create(&rosterTwo)
 
-	_, err := suite.service.CreateRosterComment(&CommentCreateRequest{RosterID: rosterOne.ID, UserID: 1, Comment: "comment one"})
+	_, err := suite.service.CreateRosterComment(rosterOne.ID, &CommentCreateRequest{UserID: 1, Comment: "comment one"})
 	assert.NoError(suite.T(), err)
-	_, err = suite.service.CreateRosterComment(&CommentCreateRequest{RosterID: rosterTwo.ID, UserID: 1, Comment: "comment two"})
+	_, err = suite.service.CreateRosterComment(rosterTwo.ID, &CommentCreateRequest{UserID: 1, Comment: "comment two"})
 	assert.NoError(suite.T(), err)
 
 	comments, err := suite.service.GetRosterComments(rosterOne.ID)

@@ -8,11 +8,13 @@ import (
 	"net/http"
 )
 
-func requireRosterOrganMemberRoleParam(db *gorm.DB, minRole models.OrganRole) gin.HandlerFunc {
+// requireOrganRoleParam ensures the current user has the required minimum
+// role within the organ referenced by the given path parameter.
+func requireOrganRoleParam(db *gorm.DB, paramStr string, minRole models.OrganRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		organID := c.Param("id")
+		organID := c.Param(paramStr)
 		if organID == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "id" + " is required"})
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": paramStr + " is required"})
 			return
 		}
 
@@ -30,7 +32,7 @@ func requireRosterOrganMemberRoleParam(db *gorm.DB, minRole models.OrganRole) gi
 
 		var organ models.Organ
 		if err := db.First(&organ, "id = ?", organID).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Roster not found"})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Organ not found"})
 			return
 		}
 

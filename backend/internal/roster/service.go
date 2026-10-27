@@ -23,8 +23,8 @@ type Service interface {
 	GetSavedRoster(uint) ([]*models.SavedShift, []*models.SavedShiftOrdering, error)
 	PushUserToBottom(shiftGroupID uint, userID uint) error
 
-	CreateShiftGroup(ShiftGroupCreateRequest) (*models.ShiftGroup, error)
-	GetShiftGroups(ShiftGroupFilterParams) (*[]models.ShiftGroup, error)
+	CreateShiftGroup(organID uint, params ShiftGroupCreateRequest) (*models.ShiftGroup, error)
+	GetShiftGroups(organID uint) (*[]models.ShiftGroup, error)
 	GetShiftGroup(uint) (*models.ShiftGroup, error)
 
 	GetShiftGroupPriorities(groupID uint) ([]*models.ShiftGroupPriority, error)
@@ -54,7 +54,7 @@ func (s *service) FillRosterPreferences(rosterID uint) ([]*models.RosterAnswer, 
 		ID: &rosterID,
 	}
 
-	rosters, err := s.GetRosters(filter)
+	rosters, err := s.GetRosters(nil, filter)
 
 	if err != nil {
 		return nil, err
@@ -225,9 +225,9 @@ func (s *service) UpdateSavedShift(ID uint, updateParams *SavedShiftUpdateReques
 	return saved, nil
 }
 
-func (s *service) CreateShiftGroup(params ShiftGroupCreateRequest) (*models.ShiftGroup, error) {
+func (s *service) CreateShiftGroup(organID uint, params ShiftGroupCreateRequest) (*models.ShiftGroup, error) {
 	shiftGroup := models.ShiftGroup{
-		OrganID: params.OrganID,
+		OrganID: organID,
 		Name:    params.Name,
 	}
 
@@ -238,12 +238,12 @@ func (s *service) CreateShiftGroup(params ShiftGroupCreateRequest) (*models.Shif
 	return &shiftGroup, nil
 }
 
-func (s *service) GetShiftGroups(filters ShiftGroupFilterParams) (*[]models.ShiftGroup, error) {
+func (s *service) GetShiftGroups(organID uint) (*[]models.ShiftGroup, error) {
 	var shiftGroups []models.ShiftGroup
 
 	db := s.db.Model(&models.ShiftGroup{})
 
-	db = db.Where("organ_id = ?", filters.OrganID)
+	db = db.Where("organ_id = ?", organID)
 
 	if err := db.Find(&shiftGroups).Error; err != nil {
 		return nil, err

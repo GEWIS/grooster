@@ -8,23 +8,23 @@ import (
 )
 
 type TemplateManager interface {
-	CreateRosterTemplate(*TemplateCreateRequest) (*models.RosterTemplate, error)
+	CreateRosterTemplate(organID uint, params *TemplateCreateRequest) (*models.RosterTemplate, error)
 	GetRosterTemplate(uint) (*models.RosterTemplate, error)
-	GetRosterTemplates(*TemplateFilterParams) ([]*models.RosterTemplate, error)
+	GetRosterTemplates(organID uint) ([]*models.RosterTemplate, error)
 	UpdateRosterTemplate(uint, *TemplateUpdateParams) (*models.RosterTemplate, error)
 	DeleteRosterTemplate(ID uint) error
 
 	UpdateRosterTemplateShift(uint, *TemplateShiftUpdateRequest) (*models.RosterTemplateShift, error)
 
-	CreateRosterTemplateShiftPreference(TemplateShiftPreferenceCreateRequest) (*models.RosterTemplateShiftPreference, error)
-	GetRosterTemplateShiftPreferences(TemplateShiftPreferenceFilterParams) ([]models.RosterTemplateShiftPreference, error)
+	CreateRosterTemplateShiftPreference(templateID uint, params TemplateShiftPreferenceCreateRequest) (*models.RosterTemplateShiftPreference, error)
+	GetRosterTemplateShiftPreferences(templateID uint, params TemplateShiftPreferenceFilterParams) ([]models.RosterTemplateShiftPreference, error)
 	UpdateRosterTemplateShiftPreference(uint, TemplateShiftPreferenceUpdateRequest) (*models.RosterTemplateShiftPreference, error)
 }
 
-func (s *service) CreateRosterTemplate(params *TemplateCreateRequest) (*models.RosterTemplate, error) {
+func (s *service) CreateRosterTemplate(organID uint, params *TemplateCreateRequest) (*models.RosterTemplate, error) {
 	var userOrgan models.Organ
 
-	if err := s.db.First(&userOrgan, params.OrganID).Error; err != nil {
+	if err := s.db.First(&userOrgan, organID).Error; err != nil {
 		return nil, err
 	}
 
@@ -61,15 +61,9 @@ func (s *service) GetRosterTemplate(ID uint) (*models.RosterTemplate, error) {
 	return &template, nil
 }
 
-func (s *service) GetRosterTemplates(params *TemplateFilterParams) ([]*models.RosterTemplate, error) {
+func (s *service) GetRosterTemplates(organID uint) ([]*models.RosterTemplate, error) {
 	var templates []*models.RosterTemplate
-	db := s.db.Model(&models.RosterTemplate{}).Preload("Shifts")
-
-	if params != nil {
-		if params.OrganID != nil {
-			db.Where("organ_id = ?", params.OrganID)
-		}
-	}
+	db := s.db.Model(&models.RosterTemplate{}).Preload("Shifts").Where("organ_id = ?", organID)
 
 	if err := db.Find(&templates).Error; err != nil {
 		return nil, err
@@ -125,7 +119,16 @@ func (s *service) UpdateRosterTemplateShift(ID uint, updateParams *TemplateShift
 	return &templateShift, nil
 }
 
-func (s *service) CreateRosterTemplateShiftPreference(params TemplateShiftPreferenceCreateRequest) (*models.RosterTemplateShiftPreference, error) {
+func (s *service) CreateRosterTemplateShiftPreference(templateID uint, params TemplateShiftPreferenceCreateRequest) (*models.RosterTemplateShiftPreference, error) {
+	var templateShift models.RosterTemplateShift
+	if err := s.db.First(&templateShift, params.RosterTemplateShiftID).Error; err != nil {
+		return nil, fmt.Errorf("roster template shift not found: %w", err)
+	}
+
+	if templateShift.TemplateID != templateID {
+		return nil, fmt.Errorf("roster template shift %d does not belong to template %d", templateShift.ID, templateID)
+	}
+
 	templateShiftPreference := models.RosterTemplateShiftPreference{
 		UserID:                params.UserID,
 		RosterTemplateShiftID: params.RosterTemplateShiftID,
@@ -139,7 +142,7 @@ func (s *service) CreateRosterTemplateShiftPreference(params TemplateShiftPrefer
 	return &templateShiftPreference, nil
 }
 
-func (s *service) GetRosterTemplateShiftPreferences(params TemplateShiftPreferenceFilterParams) ([]models.RosterTemplateShiftPreference, error) {
+func (s *service) GetRosterTemplateShiftPreferences(templateID uint, params TemplateShiftPreferenceFilterParams) ([]models.RosterTemplateShiftPreference, error) {
 	var preferences []models.RosterTemplateShiftPreference
 
 	query := s.db.Model(&models.RosterTemplateShiftPreference{})
@@ -147,7 +150,7 @@ func (s *service) GetRosterTemplateShiftPreferences(params TemplateShiftPreferen
 	query = query.Where("user_id = ?", params.UserID)
 
 	query = query.Joins("JOIN roster_template_shifts ON roster_template_shifts.id = roster_template_shift_preferences.roster_template_shift_id").
-		Where("roster_template_shifts.template_id = ?", params.TemplateID)
+		Where("roster_template_shifts.template_id = ?", templateID)
 
 	if err := query.Find(&preferences).Error; err != nil {
 		return nil, err

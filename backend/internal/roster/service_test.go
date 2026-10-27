@@ -26,52 +26,49 @@ func (suite *TestRosterSuite) SetupTest() {
 // service_roster.go test cases
 
 func (suite *TestRosterSuite) TestCreateRoster_ValidInput() {
+	organID := uint(1)
 	params := CreateRequest{
-		Name:    "Valid Name",
-		Date:    time.Now().Add(25 * time.Hour),
-		OrganID: 1,
+		Name: "Valid Name",
+		Date: time.Now().Add(25 * time.Hour),
 	}
 
-	roster, err := suite.service.CreateRoster(&params)
+	roster, err := suite.service.CreateRoster(organID, &params)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), roster)
 	assert.Equal(suite.T(), params.Name, roster.Name)
 	assert.Equal(suite.T(), params.Date.Local(), roster.Date.Local())
-	assert.Equal(suite.T(), params.OrganID, roster.OrganID)
+	assert.Equal(suite.T(), organID, roster.OrganID)
 }
 
 func (suite *TestRosterSuite) TestCreateRoster_EmptyName() {
 	params := CreateRequest{
-		Name:    "",
-		Date:    time.Now().Add(25 * time.Hour),
-		OrganID: 1,
+		Name: "",
+		Date: time.Now().Add(25 * time.Hour),
 	}
 
-	roster, err := suite.service.CreateRoster(&params)
+	roster, err := suite.service.CreateRoster(1, &params)
 	assert.Error(suite.T(), err, "Expected error for empty name")
 	assert.Nil(suite.T(), roster)
 }
 
 func (suite *TestRosterSuite) TestCreateRoster_ZeroDate() {
 	params := CreateRequest{
-		Name:    "Valid Name",
-		Date:    time.Time{},
-		OrganID: 1,
+		Name: "Valid Name",
+		Date: time.Time{},
 	}
 
-	roster, err := suite.service.CreateRoster(&params)
+	roster, err := suite.service.CreateRoster(1, &params)
 	assert.Error(suite.T(), err, "Expected error for zero date")
 	assert.Nil(suite.T(), roster)
 }
 
 func (suite *TestRosterSuite) TestCreateRoster_InvalidOrganID() {
 	params := CreateRequest{
-		Name:    "Valid Name",
-		Date:    time.Now().Add(25 * time.Hour),
-		OrganID: 0,
+		Name: "Valid Name",
+		Date: time.Now().Add(25 * time.Hour),
 	}
 
-	roster, err := suite.service.CreateRoster(&params)
+	roster, err := suite.service.CreateRoster(0, &params)
 	assert.Error(suite.T(), err, "Expected error for invalid organ ID")
 	assert.Nil(suite.T(), roster)
 }
@@ -83,13 +80,12 @@ func (suite *TestRosterSuite) TestCreateRoster_WithShifts() {
 	shift := []string{"Shift 1", "Shift 42"}
 
 	params := CreateRequest{
-		Name:    "Valid Name",
-		Date:    time.Now().Add(25 * time.Hour),
-		OrganID: organ.ID,
-		Shifts:  shift,
+		Name:   "Valid Name",
+		Date:   time.Now().Add(25 * time.Hour),
+		Shifts: shift,
 	}
 
-	roster, err := suite.service.CreateRoster(&params)
+	roster, err := suite.service.CreateRoster(organ.ID, &params)
 	assert.NoError(suite.T(), err)
 
 	var rosterShiftNames []string
@@ -101,14 +97,14 @@ func (suite *TestRosterSuite) TestCreateRoster_WithShifts() {
 }
 
 func (suite *TestRosterSuite) TestGetRosters_All() {
+	organID := uint(1)
 	cParams := CreateRequest{
-		Name:    "Valid Name",
-		Date:    time.Now().Add(25 * time.Hour),
-		OrganID: 1,
+		Name: "Valid Name",
+		Date: time.Now().Add(25 * time.Hour),
 	}
-	_, _ = suite.service.CreateRoster(&cParams)
+	_, _ = suite.service.CreateRoster(organID, &cParams)
 	var params FilterParams
-	rosters, err := suite.service.GetRosters(&params)
+	rosters, err := suite.service.GetRosters(nil, &params)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), rosters)
 
@@ -127,22 +123,21 @@ func (suite *TestRosterSuite) TestGetRosters_All() {
 	assert.NotNil(suite.T(), foundRoster.RosterShift, "RosterShift should not be nil")
 	assert.NotNil(suite.T(), foundRoster.RosterAnswer, "RosterAnswer should not be nil")
 	assert.NotNil(suite.T(), foundRoster.Organ, "Organ should be loaded")
-	assert.Equal(suite.T(), cParams.OrganID, foundRoster.OrganID)
+	assert.Equal(suite.T(), organID, foundRoster.OrganID)
 }
 
 func (suite *TestRosterSuite) TestGetRosters_FilterByID() {
 	cParams := CreateRequest{
-		Name:    "RosterByID",
-		Date:    time.Now().Add(25 * time.Hour),
-		OrganID: 1,
+		Name: "RosterByID",
+		Date: time.Now().Add(25 * time.Hour),
 	}
-	created, err := suite.service.CreateRoster(&cParams)
+	created, err := suite.service.CreateRoster(1, &cParams)
 	assert.NoError(suite.T(), err)
 
 	params := FilterParams{
 		ID: &created.ID,
 	}
-	rosters, err := suite.service.GetRosters(&params)
+	rosters, err := suite.service.GetRosters(nil, &params)
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), rosters, 1)
 	assert.Equal(suite.T(), created.ID, rosters[0].ID)
@@ -153,17 +148,16 @@ func (suite *TestRosterSuite) TestGetRosters_FilterByDate() {
 	targetDate := time.Now().Add(25 * time.Hour)
 
 	cParams := CreateRequest{
-		Name:    "RosterByDate",
-		Date:    targetDate,
-		OrganID: 1,
+		Name: "RosterByDate",
+		Date: targetDate,
 	}
-	_, err := suite.service.CreateRoster(&cParams)
+	_, err := suite.service.CreateRoster(1, &cParams)
 	assert.NoError(suite.T(), err)
 
 	params := FilterParams{
 		Date: &targetDate,
 	}
-	rosters, err := suite.service.GetRosters(&params)
+	rosters, err := suite.service.GetRosters(nil, &params)
 	assert.NoError(suite.T(), err)
 	assert.NotEmpty(suite.T(), rosters)
 
@@ -180,17 +174,14 @@ func (suite *TestRosterSuite) TestGetRosters_FilterByDate() {
 func (suite *TestRosterSuite) TestGetRosters_FilterByOrganID() {
 	organID := uint(1)
 	cParams := CreateRequest{
-		Name:    "RosterByOrgan",
-		Date:    time.Now().Add(25 * time.Hour),
-		OrganID: organID,
+		Name: "RosterByOrgan",
+		Date: time.Now().Add(25 * time.Hour),
 	}
-	_, err := suite.service.CreateRoster(&cParams)
+	_, err := suite.service.CreateRoster(organID, &cParams)
 	assert.NoError(suite.T(), err)
 
-	params := FilterParams{
-		OrganID: &organID,
-	}
-	rosters, err := suite.service.GetRosters(&params)
+	var params FilterParams
+	rosters, err := suite.service.GetRosters(&organID, &params)
 	assert.NoError(suite.T(), err)
 	assert.NotEmpty(suite.T(), rosters)
 
@@ -204,18 +195,16 @@ func (suite *TestRosterSuite) TestGetRosters_FilterByMultipleFields() {
 	targetDate := time.Now().Add(25 * time.Hour)
 
 	cParams := CreateRequest{
-		Name:    "RosterMultiFilter",
-		Date:    targetDate,
-		OrganID: organID,
+		Name: "RosterMultiFilter",
+		Date: targetDate,
 	}
-	_, err := suite.service.CreateRoster(&cParams)
+	_, err := suite.service.CreateRoster(organID, &cParams)
 	assert.NoError(suite.T(), err)
 
 	params := FilterParams{
-		Date:    &targetDate,
-		OrganID: &organID,
+		Date: &targetDate,
 	}
-	rosters, err := suite.service.GetRosters(&params)
+	rosters, err := suite.service.GetRosters(&organID, &params)
 	assert.NoError(suite.T(), err)
 
 	found := false
@@ -238,7 +227,7 @@ func (suite *TestRosterSuite) TestGetRosters_ReturnEmpty() {
 	params := FilterParams{
 		ID: &noExistID,
 	}
-	rosters, _ := suite.service.GetRosters(&params)
+	rosters, _ := suite.service.GetRosters(nil, &params)
 
 	assert.Empty(suite.T(), rosters)
 }
@@ -333,18 +322,17 @@ func (suite *TestRosterSuite) TestUpdateRoster_NotFound() {
 
 func (suite *TestRosterSuite) TestDeleteRoster_Valid() {
 	cParams := CreateRequest{
-		Name:    "Valid Name",
-		Date:    time.Now().Add(25 * time.Hour),
-		OrganID: 1,
+		Name: "Valid Name",
+		Date: time.Now().Add(25 * time.Hour),
 	}
-	roster, err := suite.service.CreateRoster(&cParams)
+	roster, err := suite.service.CreateRoster(1, &cParams)
 	assert.NoError(suite.T(), err)
 
 	err = suite.service.DeleteRoster(roster.ID)
 	assert.NoError(suite.T(), err)
 
 	params := FilterParams{ID: &roster.ID}
-	rosters, err := suite.service.GetRosters(&params)
+	rosters, err := suite.service.GetRosters(nil, &params)
 	assert.NoError(suite.T(), err)
 	assert.Empty(suite.T(), rosters)
 }
@@ -360,25 +348,23 @@ func (suite *TestRosterSuite) TestCreateRosterShift_Valid() {
 	suite.db.Create(&roster)
 
 	createParams := &ShiftCreateRequest{
-		Name:     "Morning Shift",
-		RosterID: roster.ID,
+		Name: "Morning Shift",
 	}
 
-	shift, err := suite.service.CreateRosterShift(createParams)
+	shift, err := suite.service.CreateRosterShift(roster.ID, createParams)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), shift)
 	assert.Equal(suite.T(), createParams.Name, shift.Name)
-	assert.Equal(suite.T(), createParams.RosterID, shift.RosterID)
+	assert.Equal(suite.T(), roster.ID, shift.RosterID)
 }
 
 func (suite *TestRosterSuite) TestCreateRosterShift_RosterNotFound() {
 	createParams := &ShiftCreateRequest{
-		Name:     "Evening Shift",
-		RosterID: 9999,
+		Name: "Evening Shift",
 	}
 
-	shift, err := suite.service.CreateRosterShift(createParams)
+	shift, err := suite.service.CreateRosterShift(9999, createParams)
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), shift)
@@ -432,12 +418,11 @@ func (suite *TestRosterSuite) TestCreateRosterAnswer_Valid() {
 
 	createParams := &AnswerCreateRequest{
 		UserID:        1,
-		RosterID:      roster.ID,
 		RosterShiftID: shift.ID,
 		Value:         "yes",
 	}
 
-	answer, err := suite.service.CreateRosterAnswer(createParams)
+	answer, err := suite.service.CreateRosterAnswer(roster.ID, createParams)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), answer)
@@ -460,12 +445,11 @@ func (suite *TestRosterSuite) TestCreateRosterAnswer_InvalidValue() {
 
 	createParams := &AnswerCreateRequest{
 		UserID:        1,
-		RosterID:      roster.ID,
 		RosterShiftID: shift.ID,
 		Value:         "maybe",
 	}
 
-	answer, err := suite.service.CreateRosterAnswer(createParams)
+	answer, err := suite.service.CreateRosterAnswer(roster.ID, createParams)
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), answer)
@@ -475,12 +459,11 @@ func (suite *TestRosterSuite) TestCreateRosterAnswer_InvalidValue() {
 func (suite *TestRosterSuite) TestCreateRosterAnswer_RosterNotFound() {
 	createParams := &AnswerCreateRequest{
 		UserID:        1,
-		RosterID:      9999,
 		RosterShiftID: 1,
 		Value:         "yes",
 	}
 
-	answer, err := suite.service.CreateRosterAnswer(createParams)
+	answer, err := suite.service.CreateRosterAnswer(9999, createParams)
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), answer)
@@ -497,12 +480,11 @@ func (suite *TestRosterSuite) TestCreateRosterAnswer_RosterShiftNotFound() {
 
 	createParams := &AnswerCreateRequest{
 		UserID:        1,
-		RosterID:      roster.ID,
 		RosterShiftID: 9999,
 		Value:         "yes",
 	}
 
-	answer, err := suite.service.CreateRosterAnswer(createParams)
+	answer, err := suite.service.CreateRosterAnswer(roster.ID, createParams)
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), answer)
@@ -684,12 +666,11 @@ func (suite *TestRosterSuite) TestRosterTemplateCreate_Valid() {
 	expectedNames := []string{"Shift 1", "Shift 42"}
 
 	params := TemplateCreateRequest{
-		OrganID: organ.ID,
-		Name:    "Test Template",
-		Shifts:  expectedNames,
+		Name:   "Test Template",
+		Shifts: expectedNames,
 	}
 
-	template, err := suite.service.CreateRosterTemplate(&params)
+	template, err := suite.service.CreateRosterTemplate(organ.ID, &params)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), template)
 
@@ -712,11 +693,10 @@ func (suite *TestRosterSuite) TestRosterTemplateCreate_InValidOrgan() {
 	expectedShifts := []string{"Shift 1", "Shift 42"}
 
 	params := TemplateCreateRequest{
-		OrganID: uint(999),
-		Shifts:  expectedShifts,
+		Shifts: expectedShifts,
 	}
 
-	template, err := suite.service.CreateRosterTemplate(&params)
+	template, err := suite.service.CreateRosterTemplate(999, &params)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), template)
 }
@@ -728,11 +708,10 @@ func (suite *TestRosterSuite) TestRosterTemplateCreate_NoShifts() {
 	expectedShifts := []string{}
 
 	params := TemplateCreateRequest{
-		OrganID: uint(999),
-		Shifts:  expectedShifts,
+		Shifts: expectedShifts,
 	}
 
-	template, err := suite.service.CreateRosterTemplate(&params)
+	template, err := suite.service.CreateRosterTemplate(999, &params)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), template)
 }
@@ -755,38 +734,26 @@ func (suite *TestRosterSuite) TestRosterTemplateGet_OneInValid() {
 	assert.Nil(suite.T(), newTemplate)
 }
 
-func (suite *TestRosterSuite) TestRosterTemplateGet_All() {
-	var count int64
-	suite.db.Model(&models.RosterTemplate{}).Count(&count)
-
-	templates, err := suite.service.GetRosterTemplates(nil)
-	assert.NoError(suite.T(), err)
-	assert.NotNil(suite.T(), templates)
-	assert.Len(suite.T(), templates, int(count))
-}
-
 func (suite *TestRosterSuite) TestRosterTemplateGet_ByOrganID() {
 	var template *models.RosterTemplate
 	suite.db.First(&template)
 
-	params := TemplateFilterParams{OrganID: &template.OrganID}
+	var count int64
+	suite.db.Model(&models.RosterTemplate{}).Where("organ_id = ?", template.OrganID).Count(&count)
 
-	templates, err := suite.service.GetRosterTemplates(&params)
+	templates, err := suite.service.GetRosterTemplates(template.OrganID)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), templates)
+	assert.Len(suite.T(), templates, int(count))
 
 	assert.Equal(suite.T(), template.ID, templates[0].ID)
-	assert.Equal(suite.T(), template.OrganID, templates[0].OrganID)
+	for _, t := range templates {
+		assert.Equal(suite.T(), template.OrganID, t.OrganID)
+	}
 }
 
 func (suite *TestRosterSuite) TestRosterTemplateGet_AllInvalid() {
-	var template *models.RosterTemplate
-	suite.db.First(&template)
-
-	ID := uint(9999)
-	params := TemplateFilterParams{OrganID: &ID}
-
-	templates, err := suite.service.GetRosterTemplates(&params)
+	templates, err := suite.service.GetRosterTemplates(9999)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), len(templates), 0)
 }

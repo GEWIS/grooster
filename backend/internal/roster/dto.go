@@ -10,8 +10,6 @@ type CreateRequest struct {
 
 	Date time.Time `json:"date"`
 
-	OrganID uint `json:"organId"`
-
 	Shifts []string `json:"shifts"`
 
 	TemplateID *uint `json:"templateId"`
@@ -27,8 +25,6 @@ type UpdateRequest struct {
 
 type ShiftCreateRequest struct {
 	Name string `json:"name"`
-
-	RosterID uint `json:"rosterId"`
 } // @name ShiftCreateRequest
 
 type ShiftUpdateRequest struct {
@@ -40,8 +36,6 @@ type ShiftUpdateRequest struct {
 type AnswerCreateRequest struct {
 	UserID uint `json:"userId"`
 
-	RosterID uint `json:"rosterId"`
-
 	RosterShiftID uint `json:"rosterShiftId"`
 
 	Value string `json:"value"`
@@ -52,8 +46,6 @@ type AnswerUpdateRequest struct {
 } // @name AnswerUpdateRequest
 
 type CommentCreateRequest struct {
-	RosterID uint `json:"rosterId"`
-
 	UserID uint `json:"userId"`
 
 	Comment string `json:"comment" binding:"required,max=250"`
@@ -72,21 +64,14 @@ type SavedShiftResponse struct {
 type FilterParams struct {
 	ID       *uint      `form:"id"`
 	Date     *time.Time `form:"date" time_format:"2006-01-02"`
-	OrganID  *uint      `form:"organId"`
 	Archived *bool      `form:"archived"`
 } // @name RosterFilterParams
 
 type TemplateCreateRequest struct {
-	OrganID uint `json:"organId"`
-
 	Name string `json:"name"`
 
 	Shifts []string `json:"shifts"`
 } // @name TemplateCreateRequest
-
-type TemplateFilterParams struct {
-	OrganID *uint `form:"organId"`
-} // @name TemplateFilterParams
 
 // TODO updating roster templates does not yet work
 
@@ -110,8 +95,6 @@ type TemplateShiftPreferenceCreateRequest struct {
 
 type TemplateShiftPreferenceFilterParams struct {
 	UserID uint `form:"userId"`
-
-	TemplateID uint `form:"templateId"`
 } // @name TemplateShiftPreferenceFilterParams
 
 type TemplateShiftPreferenceUpdateRequest struct {
@@ -120,13 +103,7 @@ type TemplateShiftPreferenceUpdateRequest struct {
 
 type ShiftGroupCreateRequest struct {
 	Name string `json:"name" binding:"required"`
-
-	OrganID uint `json:"organId" binding:"required"`
 } // @name ShiftGroupCreateRequest
-
-type ShiftGroupFilterParams struct {
-	OrganID uint `form:"organ_id" binding:"required"`
-}
 
 type GroupPriorityUpdateParam struct {
 	UserID uint `json:"userId" binding:"required"`

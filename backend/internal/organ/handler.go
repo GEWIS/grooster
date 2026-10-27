@@ -3,11 +3,11 @@ package organ
 import (
 	"GEWIS-Rooster/internal/models"
 	_ "GEWIS-Rooster/internal/models"
+	"GEWIS-Rooster/internal/platform/httputil"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
-	"strconv"
 )
 
 type Handler struct {
@@ -17,13 +17,13 @@ type Handler struct {
 func NewOrganHandler(rg *gin.RouterGroup, organService Service, db *gorm.DB) *Handler {
 	h := &Handler{organService: organService}
 
-	g := rg.Group("/organ")
+	g := rg.Group("/organs/:organId")
 
-	g.GET("/:id", h.GetMembersSettings)
-	g.GET("/:id/member/:userId", h.GetMemberSettings)
-	g.PATCH("/:id/member/:userId", h.UpdateMemberSettings)
+	g.GET("/members", h.GetMembersSettings)
+	g.GET("/members/:userId", h.GetMemberSettings)
+	g.PATCH("/members/:userId", h.UpdateMemberSettings)
 
-	g.PATCH("/:id/member/:userId/role", requireRosterOrganMemberRoleParam(db, models.RoleAdmin), h.UpdateMemberRole)
+	g.PATCH("/members/:userId/role", requireOrganRoleParam(db, "organId", models.RoleAdmin), h.UpdateMemberRole)
 
 	return h
 }
@@ -36,20 +36,19 @@ func NewOrganHandler(rg *gin.RouterGroup, organService Service, db *gorm.DB) *Ha
 //	@Tags         Organ
 //	@Accept       json
 //	@Produce      json
-//	@Param        id             path      uint                                true  "Organ ID"
+//	@Param        organId        path      uint                                true  "Organ ID"
 //	@Success      200            {array}  models.UserOrgan
 //	@Failure      400            {string}  string
 //	@Failure 404 {string} string
 //	@ID	getMembersSettings
-//	@Router       /organ/{id} [get]
+//	@Router       /organs/{organId}/members [get]
 func (o *Handler) GetMembersSettings(c *gin.Context) {
-	organID, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "Invalid Organ ID")
+	organID, ok := httputil.MustPathUint(c, "organId")
+	if !ok {
 		return
 	}
 
-	settings, err := o.organService.GetMembersSettings(uint(organID))
+	settings, err := o.organService.GetMembersSettings(organID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Could not find Organ"})
@@ -70,26 +69,25 @@ func (o *Handler) GetMembersSettings(c *gin.Context) {
 //	@Tags         Organ
 //	@Accept       json
 //	@Produce      json
-//	@Param        id             path      uint                                true  "Organ ID"
+//	@Param        organId        path      uint                                true  "Organ ID"
 //	@Param        userId         path      uint                                true  "User ID"
 //	@Success      200            {object}  models.UserOrgan
 //	@Failure      400            {string}  string
 //	@Failure 404 {string} string
-//	@Router       /organ/{id}/member/{userId} [get]
+//	@ID           getMemberSettings
+//	@Router       /organs/{organId}/members/{userId} [get]
 func (o *Handler) GetMemberSettings(c *gin.Context) {
-	organID, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "Invalid Organ ID")
+	organID, ok := httputil.MustPathUint(c, "organId")
+	if !ok {
 		return
 	}
 
-	userID, err := strconv.ParseUint(c.Param("userId"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "Invalid User ID")
+	userID, ok := httputil.MustPathUint(c, "userId")
+	if !ok {
 		return
 	}
 
-	settings, err := o.organService.GetMemberSettings(uint(organID), uint(userID))
+	settings, err := o.organService.GetMemberSettings(organID, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Could not find Organ or User"})
@@ -110,22 +108,21 @@ func (o *Handler) GetMemberSettings(c *gin.Context) {
 //	@Tags         Organ
 //	@Accept       json
 //	@Produce      json
-//	@Param        id             path      uint                                true  "Organ ID"
+//	@Param        organId        path      uint                                true  "Organ ID"
 //	@Param        userId         path      uint                                true  "User ID"
 //	@Param        updateParams   body      organ.UpdateMemberSettingsParams   true  "Settings input"
 //	@Success      200            {object}  models.UserOrgan
 //	@Failure      400            {string}  string
-//	@Router       /organ/{id}/member/{userId} [patch]
+//	@ID           updateMemberSettings
+//	@Router       /organs/{organId}/members/{userId} [patch]
 func (o *Handler) UpdateMemberSettings(c *gin.Context) {
-	organID, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "Invalid Organ ID")
+	organID, ok := httputil.MustPathUint(c, "organId")
+	if !ok {
 		return
 	}
 
-	userID, err := strconv.ParseUint(c.Param("userId"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "Invalid User ID")
+	userID, ok := httputil.MustPathUint(c, "userId")
+	if !ok {
 		return
 	}
 
@@ -135,7 +132,7 @@ func (o *Handler) UpdateMemberSettings(c *gin.Context) {
 		return
 	}
 
-	result, err := o.organService.UpdateMemberSettings(uint(organID), uint(userID), &params)
+	result, err := o.organService.UpdateMemberSettings(organID, userID, &params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -152,23 +149,22 @@ func (o *Handler) UpdateMemberSettings(c *gin.Context) {
 //	@Tags         Organ
 //	@Accept       json
 //	@Produce      json
-//	@Param        id             path      uint                                true  "Organ ID"
+//	@Param        organId        path      uint                                true  "Organ ID"
 //	@Param        userId         path      uint                                true  "User ID"
 //	@Param        updateParams   body      organ.UpdateMemberRoleParams   true  "Settings input"
 //	@Success      200            {object}  models.UserOrgan
 //	@Failure      400            {string}  string
 //	@Failure 	  404			 {string}  string
-//	@Router       /organ/{id}/member/{userId}/role [patch]
+//	@ID           updateMemberRole
+//	@Router       /organs/{organId}/members/{userId}/role [patch]
 func (o *Handler) UpdateMemberRole(c *gin.Context) {
-	organID, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusNotFound, "Invalid Organ ID")
+	organID, ok := httputil.MustPathUint(c, "organId")
+	if !ok {
 		return
 	}
 
-	userID, err := strconv.ParseUint(c.Param("userId"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusNotFound, "Invalid User ID")
+	userID, ok := httputil.MustPathUint(c, "userId")
+	if !ok {
 		return
 	}
 
@@ -178,7 +174,7 @@ func (o *Handler) UpdateMemberRole(c *gin.Context) {
 		return
 	}
 
-	result, err := o.organService.UpdateMemberRole(uint(organID), uint(userID), params)
+	result, err := o.organService.UpdateMemberRole(organID, userID, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
