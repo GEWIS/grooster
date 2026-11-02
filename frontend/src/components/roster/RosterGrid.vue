@@ -11,11 +11,13 @@ import {
     OiLockOpen,
     OiPlus,
     OiTrash,
+    OiUsers,
 } from '@openvue/openicons-vue';
 import type { RosterShift } from '@gewis/grooster-backend-ts';
 import PreferenceSelect from '@/components/common/PreferenceSelect.vue';
 import PreferenceTag from '@/components/common/PreferenceTag.vue';
 import RosterCommentPopover from '@/components/roster/RosterCommentPopover.vue';
+import ShiftGroupDialog from '@/components/roster/dialogs/ShiftGroupDialog.vue';
 import type { RosterGrid } from '@/composables/useRosterGrid';
 import { useConfirmDelete } from '@/composables/useConfirmDelete';
 
@@ -41,6 +43,7 @@ function toggleShift(shiftId: number) {
 
 const shiftMenu = ref<InstanceType<typeof Menu>>();
 const menuShift = ref<RosterShift | null>(null);
+const shiftGroupOpen = ref(false);
 
 const shiftMenuItems = computed(() => {
     const shift = menuShift.value;
@@ -58,6 +61,11 @@ const shiftMenuItems = computed(() => {
             iconComponent: OiArrowRight,
             disabled: index === props.grid.shifts.value.length - 1,
             command: () => props.grid.moveShift(shift.id, 'right'),
+        },
+        {
+            label: 'Shift group',
+            iconComponent: OiUsers,
+            command: () => (shiftGroupOpen.value = true),
         },
         { separator: true },
         {
@@ -259,5 +267,11 @@ const focusRing = 'focus-visible:outline-2 focus-visible:-outline-offset-2 focus
             </template>
         </Menu>
         <RosterCommentPopover ref="comments" :grid="grid" />
+        <ShiftGroupDialog
+            v-model:visible="shiftGroupOpen"
+            :shift="menuShift"
+            :shift-groups="grid.shiftGroups.value"
+            @submit="menuShift && grid.setShiftGroup(menuShift.id, $event)"
+        />
     </section>
 </template>
