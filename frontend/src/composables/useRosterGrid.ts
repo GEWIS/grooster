@@ -1,6 +1,6 @@
 import { computed, reactive, ref, watch, type Ref } from 'vue';
 import { useToast } from 'openvue/usetoast';
-import type { RosterAnswer, RosterShift, User } from '@gewis/grooster-backend-ts';
+import type { RosterAnswer, RosterShift, ShiftGroup, User } from '@gewis/grooster-backend-ts';
 import { useRosterStore } from '@/stores/roster.store';
 import { Role, useAuthStore } from '@/stores/auth.store';
 import { getGEWISId } from '@/helpers/TokenHelper';
@@ -126,6 +126,25 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
         }
     }
 
+    const shiftGroups = ref<ShiftGroup[]>([]);
+
+    async function loadShiftGroups() {
+        try {
+            const response = await ApiService.shiftGroupApi.getShiftGroups(organId.value);
+            shiftGroups.value = response.data ?? [];
+        } catch (error) {
+            notifyError('Failed to load shift groups', error);
+        }
+    }
+
+    async function setShiftGroup(shiftId: number, shiftGroupId: number) {
+        try {
+            await rosterStore.updateShift(rosterId.value, shiftId, { shiftGroupId });
+        } catch (error) {
+            notifyError('Could not change the shift group', error);
+        }
+    }
+
     async function moveShift(shiftId: number, direction: 'left' | 'right') {
         const list = shifts.value;
         const index = list.findIndex((shift) => shift.id === shiftId);
@@ -216,7 +235,9 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
     watch(
         organId,
         (id) => {
-            if (id) void loadMembers();
+            if (!id) return;
+            void loadMembers();
+            void loadShiftGroups();
         },
         { immediate: true },
     );
@@ -251,6 +272,8 @@ export function useRosterGrid(rosterId: Ref<number>, organId: Ref<number>) {
         addShift,
         removeShift,
         moveShift,
+        shiftGroups,
+        setShiftGroup,
         lock,
         unlock,
         autoFill,
